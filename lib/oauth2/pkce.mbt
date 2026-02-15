@@ -14,7 +14,7 @@ pub struct PkceCodeVerifier {
 /// Derived from code_verifier using S256 (SHA256) or Plain method
 pub struct PkceCodeChallenge {
   value : String
-  method : PkceCodeChallengeMethod
+  challenge_method : PkceCodeChallengeMethod
 } derive(Show, Eq)
 
 ///|
@@ -89,7 +89,7 @@ pub fn PkceCodeChallenge::from_verifier_s256(
   // Base64URL encode the hash
   let challenge_value = base64url_encode(hash_bytes.to_string())
 
-  { value: challenge_value, method: S256 }
+  { value: challenge_value, challenge_method: S256 }
 }
 
 ///|
@@ -98,7 +98,7 @@ pub fn PkceCodeChallenge::from_verifier_s256(
 pub fn PkceCodeChallenge::from_verifier_plain(
   verifier : PkceCodeVerifier,
 ) -> PkceCodeChallenge {
-  { value: verifier.value, method: Plain }
+  { value: verifier.value, challenge_method: Plain }
 }
 
 ///|
@@ -110,7 +110,7 @@ pub fn PkceCodeChallenge::to_string(self : PkceCodeChallenge) -> String {
 ///|
 /// Get the code_challenge_method as a string
 pub fn PkceCodeChallenge::method_string(self : PkceCodeChallenge) -> String {
-  match self.method {
+  match self.challenge_method {
     Plain => "plain"
     S256 => "S256"
   }

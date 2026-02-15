@@ -51,7 +51,7 @@ test "PkceCodeChallenge::from_verifier_s256" {
   let challenge = PkceCodeChallenge::from_verifier_s256(verifier)
 
   // Challenge should be Base64URL encoded SHA256 hash
-  assert_eq(challenge.method, S256)
+  assert_eq(challenge.challenge_method, S256)
 
   // Should be a valid Base64URL string (no + / =)
   let value = challenge.to_string()
@@ -83,7 +83,7 @@ test "PkceCodeChallenge::from_verifier_plain" {
 
   // Plain method: challenge = verifier
   assert_eq(challenge.to_string(), "test_verifier_value")
-  assert_eq(challenge.method, Plain)
+  assert_eq(challenge.challenge_method, Plain)
 }
 
 ///|

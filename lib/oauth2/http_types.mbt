@@ -2,6 +2,7 @@
 
 ///|
 /// HttpMethod represents HTTP request methods
+/// Note: GET, POST, PUT, DELETE variants are defined for future use
 pub enum HttpMethod {
   GET
   POST

@@ -201,7 +201,7 @@ test "PasswordRequest::get_auth_header returns Basic auth when client_secret is 
 
   let auth_header = request.get_auth_header()
   match auth_header {
-    Some(header) => assert_true(header.starts_with("Basic "))
+    Some(header) => assert_true(header.has_prefix("Basic "))
     None => assert_true(false)
   }
 }

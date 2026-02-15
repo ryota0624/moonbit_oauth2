@@ -122,7 +122,7 @@ test "ClientCredentialsRequest::get_auth_header returns Basic auth" {
 
   let auth_header = request.get_auth_header()
   // Basic auth format: "Basic " + base64(client_id:client_secret)
-  assert_true(auth_header.starts_with("Basic "))
+  assert_true(auth_header.has_prefix("Basic "))
 }
 
 ///|
