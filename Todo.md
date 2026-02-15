@@ -55,16 +55,26 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
   - [x] URL生成とトークン交換の連携テスト
   - [x] エラーハンドリングのテスト
   - [x] CSRF保護のテスト
-- [ ] モックサーバーを使ったテスト
+- [x] モックサーバーを使ったテスト
+  - [x] mock-oauth2-serverのセットアップ
+  - [x] 統合テストの実装
+  - [x] 自動テストスクリプトの作成
 
 ## Step 4: PKCE実装
-- [ ] PkceCodeVerifier実装
-  - [ ] ランダムなcode_verifierの生成
-- [ ] PkceCodeChallenge実装
-  - [ ] code_challengeの計算（SHA256）
-  - [ ] code_challenge_methodの指定
-- [ ] 認可コードフローへのPKCE統合
-- [ ] PKCEのテスト
+- [x] SHA256実装（RFC 6234準拠）
+- [x] Base64URLエンコーディング（RFC 4648）
+- [x] PkceCodeVerifier実装
+  - [x] ランダムなcode_verifierの生成
+  - [x] 43文字、unreserved文字セット
+- [x] PkceCodeChallenge実装
+  - [x] code_challengeの計算（SHA256）
+  - [x] code_challenge_methodの指定（S256/Plain）
+- [x] 認可コードフローへのPKCE統合
+  - [x] AuthorizationRequest::new_with_pkce()
+  - [x] TokenRequest::new_with_pkce()
+- [x] PKCEのテスト
+  - [x] RFC 7636テストベクター検証
+  - [x] 統合テスト
 
 ## Step 5: その他の認証フロー実装
 - [ ] クライアント認証情報グラント
@@ -77,8 +87,13 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
   - [ ] テスト
 
 ## Step 6: 統合テストと実例
-- [ ] docker-compose.ymlでのテスト環境構築
-  - [ ] モックOAuth2サーバーのセットアップ
+- [x] docker-compose.ymlでのテスト環境構築
+  - [x] モックOAuth2サーバーのセットアップ（mock-oauth2-server）
+  - [x] Keycloakのセットアップ（オプション）
+- [x] 統合テストの実装
+  - [x] Authorization Code Flowのテスト
+  - [x] PKCEフローのテスト
+  - [x] テスト自動化スクリプト
 - [ ] 実例の作成
   - [ ] GitHubでの使用例
   - [ ] Googleでの使用例
