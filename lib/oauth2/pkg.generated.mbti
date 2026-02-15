@@ -14,6 +14,10 @@ pub fn parse_oauth2_error(String) -> OAuth2Error
 
 pub fn parse_token_response(String) -> Result[TokenResponse, OAuth2Error]
 
+pub fn sha256(String) -> Array[UInt]
+
+pub fn sha256_hex(String) -> String
+
 pub fn url_encode(String) -> String
 
 // Errors
