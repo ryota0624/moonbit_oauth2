@@ -55,9 +55,8 @@ pub fn AuthorizationRequest::new_with_pkce(
 
 ///|
 /// Generate a random CSRF token
+/// Uses cryptographically secure random number generator (Chacha8 CSPRNG)
 pub fn generate_csrf_token() -> CsrfToken {
-  // Simple random token generation using timestamp and counter
-  // In production, use a cryptographically secure random generator
   let timestamp = "@builtin.timestamp_now"
   let random_suffix = generate_random_suffix()
   CsrfToken::new("state_\{timestamp}_\{random_suffix}")
@@ -65,15 +64,20 @@ pub fn generate_csrf_token() -> CsrfToken {
 
 ///|
 /// Generate a random suffix for state parameter
+/// Uses cryptographically secure random number generator (Chacha8 CSPRNG)
 fn generate_random_suffix() -> String {
-  // Simple counter-based approach for now
-  // TODO: Use proper random number generator in production
+  let r = @random.Rand::new()
   let chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+  let char_count = chars.length()
   let result = StringBuilder::new()
+
   for i = 0; i < 16; i = i + 1 {
-    let idx = (i * 7 + 13) % chars.length()
+    let idx = r
+      .uint(limit=char_count.reinterpret_as_uint())
+      .reinterpret_as_int()
     result.write_char(chars[idx].unsafe_to_char())
   }
+
   result.to_string()
 }
 
@@ -129,14 +133,4 @@ pub fn AuthorizationRequest::build_authorization_url(
   } else {
     "\{base_url}?\{query_string}"
   }
-}
-
-///|
-/// Build scope string from array of Scope
-fn build_scope_string(scopes : Array[Scope]) -> String {
-  let scope_strs : Array[String] = []
-  for i = 0; i < scopes.length(); i = i + 1 {
-    scope_strs.push(scopes[i].to_string())
-  }
-  scope_strs.join(" ")
 }

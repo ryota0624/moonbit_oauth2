@@ -34,24 +34,20 @@ pub fn PkceCodeVerifier::new(value : String) -> PkceCodeVerifier {
 ///|
 /// Generate a random PKCE code_verifier
 /// Returns a 43-character string (256 bits of entropy)
-/// Uses characters: A-Z, a-z, 0-9, -, ., _, ~
+/// Uses cryptographically secure random number generator (Chacha8 CSPRNG)
+/// Characters: A-Z, a-z, 0-9, -, ., _, ~
 pub fn PkceCodeVerifier::new_random() -> PkceCodeVerifier {
   // Generate 43 random characters from unreserved character set
   // RFC 7636 recommends 43-128 characters, we use 43 (minimum)
+  let r = @random.Rand::new()
   let unreserved_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+  let char_count = unreserved_chars.length()
   let result = StringBuilder::new()
 
-  // Use timestamp and counter for randomness
-  // In production, use cryptographically secure random generator
-  let timestamp = "@builtin.timestamp_now"
-  let mut seed = timestamp.length() + 1000 // Ensure positive start
-
   for i = 0; i < 43; i = i + 1 {
-    // Simple pseudo-random index generation (LCG algorithm)
-    // Use absolute value to ensure positive result
-    let next_seed = (seed * 1103515245 + 12345) % 2147483647
-    seed = if next_seed < 0 { -next_seed } else { next_seed }
-    let idx = seed % unreserved_chars.length()
+    let idx = r
+      .uint(limit=char_count.reinterpret_as_uint())
+      .reinterpret_as_int()
     result.write_char(unreserved_chars[idx].unsafe_to_char())
   }
 
