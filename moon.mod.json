@@ -5,6 +5,7 @@
   "repository": "",
   "license": "Apache-2.0",
   "keywords": [],
+  "source": "lib",
   "description": "",
   "preferred-target": "native"
 }

@@ -1,0 +1,101 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ryota0624/oauth2/oauth2"
+
+// Values
+
+// Errors
+
+// Types and methods
+type AccessToken
+pub fn AccessToken::new(String) -> Self
+pub fn AccessToken::to_string(Self) -> String
+pub impl Eq for AccessToken
+pub impl Show for AccessToken
+
+type AuthUrl
+pub fn AuthUrl::new(String) -> Self
+pub fn AuthUrl::to_string(Self) -> String
+pub impl Eq for AuthUrl
+pub impl Show for AuthUrl
+
+type ClientId
+pub fn ClientId::new(String) -> Self
+pub fn ClientId::to_string(Self) -> String
+pub impl Eq for ClientId
+pub impl Show for ClientId
+
+type ClientSecret
+pub fn ClientSecret::new(String) -> Self
+pub fn ClientSecret::to_string(Self) -> String
+pub impl Eq for ClientSecret
+pub impl Show for ClientSecret
+
+type CsrfToken
+pub fn CsrfToken::new(String) -> Self
+pub fn CsrfToken::to_string(Self) -> String
+pub impl Eq for CsrfToken
+pub impl Show for CsrfToken
+
+pub enum OAuth2Error {
+  InvalidRequest(String)
+  InvalidClient(String)
+  InvalidGrant(String)
+  UnauthorizedClient(String)
+  UnsupportedGrantType(String)
+  InvalidScope(String)
+  AccessDenied(String)
+  UnsupportedResponseType(String)
+  ServerError(String)
+  TemporarilyUnavailable(String)
+  HttpError(String)
+  ParseError(String)
+  Other(String)
+}
+pub fn OAuth2Error::from_error_code(String, String?) -> Self
+pub fn OAuth2Error::message(Self) -> String
+pub impl Eq for OAuth2Error
+pub impl Show for OAuth2Error
+
+type RedirectUrl
+pub fn RedirectUrl::new(String) -> Self
+pub fn RedirectUrl::to_string(Self) -> String
+pub impl Eq for RedirectUrl
+pub impl Show for RedirectUrl
+
+type RefreshToken
+pub fn RefreshToken::new(String) -> Self
+pub fn RefreshToken::to_string(Self) -> String
+pub impl Eq for RefreshToken
+pub impl Show for RefreshToken
+
+type Scope
+pub fn Scope::new(String) -> Self
+pub fn Scope::to_string(Self) -> String
+pub impl Eq for Scope
+pub impl Show for Scope
+
+pub struct TokenResponse {
+  access_token : AccessToken
+  token_type : String
+  expires_in : Int?
+  refresh_token : RefreshToken?
+  scope : String?
+}
+pub fn TokenResponse::access_token(Self) -> AccessToken
+pub fn TokenResponse::expires_in(Self) -> Int?
+pub fn TokenResponse::new(AccessToken, String, Int?, RefreshToken?, String?) -> Self
+pub fn TokenResponse::refresh_token(Self) -> RefreshToken?
+pub fn TokenResponse::scope(Self) -> String?
+pub fn TokenResponse::token_type(Self) -> String
+pub impl Show for TokenResponse
+
+type TokenUrl
+pub fn TokenUrl::new(String) -> Self
+pub fn TokenUrl::to_string(Self) -> String
+pub impl Eq for TokenUrl
+pub impl Show for TokenUrl
+
+// Type aliases
+
+// Traits
+

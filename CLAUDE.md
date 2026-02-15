@@ -148,8 +148,8 @@
 - コミットメッセージは変更の意図を明確に記載
 - 大きな変更は小さな単位に分割
 - テストを含めて実装
-- テスト実行は`moon test --native`コマンドを使用
-- 動作検証にはdocker-compse.ymlで提供される環境を使用する
+- テスト実行は`moon test`コマンドを使用
+- 動作検証にはdocker-compose.ymlで提供される環境を使用する
 
 # MoonBit Project Agents.md Guide
 
