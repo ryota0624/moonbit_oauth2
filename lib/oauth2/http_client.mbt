@@ -225,16 +225,45 @@ pub async fn OAuth2HttpClient::post(
   // Convert headers to mizchi/x format
   let http_headers = convert_headers(headers)
 
+  // Debug: print request details
+  println("DEBUG http_client POST:")
+  println("  URL: \{url}")
+  println("  Body length: \{body.length()}")
+
   // Send POST request using mizchi/x
   let (response, response_body) = @http.post(url, body, headers=http_headers) catch {
     err => return Err(HttpError("HTTP request failed: \{err}"))
   }
 
+  println("DEBUG after @http.post:")
+  println("  Response code: \{response.code}")
+
   // Convert response to our HttpResponse type
   let response_headers : HttpHeaders = {}
   response.headers.each(fn(key, value) { response_headers[key] = value })
 
+  // Read body text
   let body_text = response_body.text()
 
+  // Debug: print response details
+  println("DEBUG http_client response:")
+  println("  Status: \{response.code}")
+  println("  Body length: \{body_text.length()}")
+  if body_text.length() > 0 {
+    let preview_len = if body_text.length() < 100 { body_text.length() } else { 100 }
+    println("  Body (first 100 chars): \{body_text[0:preview_len].to_string()}")
+  }
+
   Ok(HttpResponse::new(response.code, response_headers, body_text))
+}
+
+///|
+/// Build scope string from array of Scope
+/// Joins scope values with space separator
+pub fn build_scope_string(scopes : Array[Scope]) -> String {
+  let scope_strs : Array[String] = []
+  for i = 0; i < scopes.length(); i = i + 1 {
+    scope_strs.push(scopes[i].to_string())
+  }
+  scope_strs.join(" ")
 }

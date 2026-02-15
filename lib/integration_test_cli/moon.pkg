@@ -1,0 +1,8 @@
+import {
+  "ryota0624/oauth2/oauth2",
+  "moonbitlang/async",
+}
+
+options(
+  "is-main": true,
+)

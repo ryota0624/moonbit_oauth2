@@ -100,3 +100,90 @@ test "integration: PKCE token request body" {
   )
   assert_true(body.contains("grant_type=authorization_code"))
 }
+
+///|
+/// Test Client Credentials Grant request structure
+test "integration: client credentials request structure" {
+  let token_url = TokenUrl::new("http://localhost:8081/default/token")
+  let client_id = ClientId::new("test_client")
+  let client_secret = ClientSecret::new("test_secret")
+  let scopes = [Scope::new("api:read"), Scope::new("api:write")]
+
+  let request = ClientCredentialsRequest::new(
+    token_url, client_id, client_secret, scopes,
+  )
+
+  let body = request.build_request_body()
+
+  // Verify request body structure
+  assert_true(body.contains("grant_type=client_credentials"))
+  assert_true(body.contains("client_id=test_client"))
+  assert_true(body.contains("client_secret=test_secret"))
+  assert_true(body.contains("scope=api%3Aread%20api%3Awrite"))
+}
+
+///|
+/// Test Client Credentials Grant without scope
+test "integration: client credentials without scope" {
+  let token_url = TokenUrl::new("http://localhost:8081/default/token")
+  let client_id = ClientId::new("test_client")
+  let client_secret = ClientSecret::new("test_secret")
+
+  let request = ClientCredentialsRequest::new(
+    token_url, client_id, client_secret, [],
+  )
+
+  let body = request.build_request_body()
+
+  // Verify request body structure
+  assert_true(body.contains("grant_type=client_credentials"))
+  assert_true(body.contains("client_id=test_client"))
+  assert_false(body.contains("scope="))
+}
+
+///|
+/// Test Password Grant request structure
+test "integration: password grant request structure" {
+  let token_url = TokenUrl::new("http://localhost:8081/default/token")
+  let client_id = ClientId::new("test_client")
+  let client_secret = Some(ClientSecret::new("test_secret"))
+  let username = "test_user@example.com"
+  let password = "test_password"
+  let scopes = [Scope::new("openid"), Scope::new("profile")]
+
+  let request = PasswordRequest::new(
+    token_url, client_id, client_secret, username, password, scopes,
+  )
+
+  let body = request.build_request_body()
+
+  // Verify request body structure
+  assert_true(body.contains("grant_type=password"))
+  assert_true(body.contains("username=test_user%40example.com"))
+  assert_true(body.contains("password=test_password"))
+  assert_true(body.contains("client_id=test_client"))
+  assert_true(body.contains("client_secret=test_secret"))
+  assert_true(body.contains("scope=openid%20profile"))
+}
+
+///|
+/// Test Password Grant without client_secret
+test "integration: password grant without client_secret" {
+  let token_url = TokenUrl::new("http://localhost:8081/default/token")
+  let client_id = ClientId::new("public_client")
+  let username = "test_user"
+  let password = "test_password"
+
+  let request = PasswordRequest::new(
+    token_url, client_id, None, username, password, [],
+  )
+
+  let body = request.build_request_body()
+
+  // Verify request body structure
+  assert_true(body.contains("grant_type=password"))
+  assert_true(body.contains("username=test_user"))
+  assert_true(body.contains("password=test_password"))
+  assert_true(body.contains("client_id=public_client"))
+  assert_false(body.contains("client_secret="))
+}
