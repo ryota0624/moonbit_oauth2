@@ -8,6 +8,8 @@ pub fn build_basic_auth_header(ClientId, ClientSecret) -> String
 
 pub fn build_form_urlencoded_body(Map[String, String]) -> String
 
+pub fn build_scope_string(Array[Scope]) -> String
+
 pub fn generate_csrf_token() -> CsrfToken
 
 pub fn int_to_hex(Int) -> String
@@ -50,6 +52,19 @@ pub fn AuthorizationRequest::build_authorization_url(Self) -> String
 pub fn AuthorizationRequest::new(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken) -> Self
 pub fn AuthorizationRequest::new_with_pkce(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken, PkceCodeChallenge) -> Self
 pub impl Show for AuthorizationRequest
+
+pub struct ClientCredentialsRequest {
+  token_url : TokenUrl
+  client_id : ClientId
+  client_secret : ClientSecret
+  scope : Array[Scope]
+  grant_type : String
+}
+pub fn ClientCredentialsRequest::build_request_body(Self) -> String
+pub async fn ClientCredentialsRequest::execute(Self, OAuth2HttpClient) -> Result[TokenResponse, OAuth2Error]
+pub fn ClientCredentialsRequest::get_auth_header(Self) -> String
+pub fn ClientCredentialsRequest::new(TokenUrl, ClientId, ClientSecret, Array[Scope]) -> Self
+pub impl Show for ClientCredentialsRequest
 
 type ClientId
 pub fn ClientId::new(String) -> Self
@@ -123,6 +138,21 @@ pub struct OAuth2HttpClient {
 }
 pub fn OAuth2HttpClient::new() -> Self
 pub async fn OAuth2HttpClient::post(Self, String, Map[String, String], String) -> Result[HttpResponse, OAuth2Error]
+
+pub struct PasswordRequest {
+  token_url : TokenUrl
+  client_id : ClientId
+  client_secret : ClientSecret?
+  username : String
+  password : String
+  scope : Array[Scope]
+  grant_type : String
+}
+pub fn PasswordRequest::build_request_body(Self) -> String
+pub async fn PasswordRequest::execute(Self, OAuth2HttpClient) -> Result[TokenResponse, OAuth2Error]
+pub fn PasswordRequest::get_auth_header(Self) -> String?
+pub fn PasswordRequest::new(TokenUrl, ClientId, ClientSecret?, String, String, Array[Scope]) -> Self
+pub impl Show for PasswordRequest
 
 pub struct PkceCodeChallenge {
   value : String

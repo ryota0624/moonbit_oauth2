@@ -1,3 +1,5 @@
 import {
   "mizchi/x/http",
+  "moonbitlang/core/random",
+  "moonbitlang/async/io",
 }
