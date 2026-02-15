@@ -1,0 +1,5 @@
+
+options(
+  "supported-targets": [ "js", "native" ],
+  targets: { },
+)
