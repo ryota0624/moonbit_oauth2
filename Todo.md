@@ -40,17 +40,21 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
   - [x] エラーハンドリング
 
 ## Step 3: 認可コードフロー実装
-- [ ] AuthorizationRequest実装
-  - [ ] 認可URLの生成
-  - [ ] state（CSRF保護）パラメータの追加
-  - [ ] scopeのハンドリング
-- [ ] TokenRequest実装
-  - [ ] 認可コードからトークンへの交換
-  - [ ] リクエストボディの構築
-- [ ] TokenResponse実装
-  - [ ] JSONレスポンスのパース
-  - [ ] access_token, refresh_token, expires_in等の抽出
-- [ ] 認可コードフローの統合テスト
+- [x] AuthorizationRequest実装
+  - [x] 認可URLの生成
+  - [x] state（CSRF保護）パラメータの追加
+  - [x] scopeのハンドリング
+- [x] TokenRequest実装
+  - [x] 認可コードからトークンへの交換
+  - [x] リクエストボディの構築
+- [x] TokenResponse実装
+  - [x] JSONレスポンスのパース
+  - [x] access_token, refresh_token, expires_in等の抽出
+- [x] 認可コードフローの統合テスト
+  - [x] 完全なフローのシミュレーション
+  - [x] URL生成とトークン交換の連携テスト
+  - [x] エラーハンドリングのテスト
+  - [x] CSRF保護のテスト
 - [ ] モックサーバーを使ったテスト
 
 ## Step 4: PKCE実装
