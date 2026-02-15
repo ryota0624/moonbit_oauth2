@@ -238,6 +238,39 @@ async fn test_password_grant(config : Config) -> Unit {
       // トークンが JWT 形式かチェック
       let is_jwt = token_str.contains(".")
       print_result("JWT 形式", is_jwt, "")
+
+      // UserInfo エンドポイントでユーザー情報を取得
+      println("")
+      println("📋 UserInfo エンドポイントでユーザー情報を取得:")
+      let userinfo_url = "\{config.base_url}/protocol/openid-connect/userinfo"
+      println("  URL: \{userinfo_url}")
+
+      let headers : Map[String, String] = {
+        "Authorization": "Bearer \{token_str}",
+        "Accept": "application/json",
+      }
+
+      let (resp, body) = @http.get(userinfo_url, headers~)
+      if resp.code == 200 {
+        print_result("UserInfo 取得", true, "")
+        println("")
+        println("  ユーザー情報:")
+        let body_str = body.text()
+        println("  \{body_str}")
+
+        // JSONから基本情報を抽出（簡易パース）
+        if body_str.contains("\"sub\"") {
+          print_result("sub (ユーザーID) 存在", true, "")
+        }
+        if body_str.contains("\"preferred_username\"") {
+          print_result("preferred_username 存在", true, "")
+        }
+        if body_str.contains("\"email\"") {
+          print_result("email 存在", true, "")
+        }
+      } else {
+        print_result("UserInfo 取得", false, "HTTP \{resp.code}")
+      }
     }
     Err(error) => {
       print_result("Password Grant Flow", false, error.message())

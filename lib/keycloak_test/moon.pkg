@@ -1,5 +1,6 @@
 import {
   "ryota0624/oauth2/oauth2",
+  "mizchi/x/http",
   "mizchi/x/sys",
   "moonbitlang/async",
 }
