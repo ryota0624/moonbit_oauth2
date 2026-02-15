@@ -2,6 +2,10 @@
 
 [![Test](https://github.com/ryota0624/oauth2/actions/workflows/test.yml/badge.svg)](https://github.com/ryota0624/oauth2/actions/workflows/test.yml)
 
+> **⚠️ ALPHA VERSION**
+> This library is currently in alpha stage. APIs may change without notice.
+> Not recommended for production use yet.
+
 OAuth2 client library for MoonBit with support for Native and JS targets.
 
 ## Features
