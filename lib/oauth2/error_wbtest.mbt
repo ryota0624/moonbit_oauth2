@@ -1,5 +1,5 @@
-///| Tests for OAuth2 Error Types
-
+///|
+/// Tests for OAuth2 Error Types
 test "OAuth2Error from_error_code with description" {
   let error = OAuth2Error::from_error_code(
     "invalid_request",
@@ -12,6 +12,7 @@ test "OAuth2Error from_error_code with description" {
   }
 }
 
+///|
 test "OAuth2Error from_error_code without description" {
   let error = OAuth2Error::from_error_code("invalid_client", None)
 
@@ -21,21 +22,25 @@ test "OAuth2Error from_error_code without description" {
   }
 }
 
+///|
 test "OAuth2Error message for InvalidRequest" {
   let error = InvalidRequest("Test error")
   assert_eq(error.message(), "Invalid request: Test error")
 }
 
+///|
 test "OAuth2Error message for AccessDenied" {
   let error = AccessDenied("User denied access")
   assert_eq(error.message(), "Access denied: User denied access")
 }
 
+///|
 test "OAuth2Error message for ServerError" {
   let error = ServerError("Internal server error")
   assert_eq(error.message(), "Server error: Internal server error")
 }
 
+///|
 test "OAuth2Error from unknown error code" {
   let error = OAuth2Error::from_error_code(
     "unknown_error",
@@ -49,6 +54,7 @@ test "OAuth2Error from unknown error code" {
   }
 }
 
+///|
 test "OAuth2Error equality" {
   let error1 = InvalidRequest("Same error")
   let error2 = InvalidRequest("Same error")
@@ -58,6 +64,7 @@ test "OAuth2Error equality" {
   assert_false(error1 == error3)
 }
 
+///|
 test "OAuth2Error all standard codes" {
   let test_cases : Array[(String, String)] = [
     ("invalid_request", "Invalid request: test"),

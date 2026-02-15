@@ -34,7 +34,10 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
   - [x] build_basic_auth_header関数
   - [x] parse_oauth2_error関数（プレースホルダー）
 - [x] HTTPクライアントの基本テスト（9テスト全て成功）
-- [ ] mizchi/xを使った実際のHTTP POST実装（次のステップ）
+- [x] mizchi/xを使った実際のHTTP POST実装
+  - [x] OAuth2HttpClient::postメソッドの非同期実装
+  - [x] @http.postの統合
+  - [x] エラーハンドリング
 
 ## Step 3: 認可コードフロー実装
 - [ ] AuthorizationRequest実装

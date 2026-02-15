@@ -2,6 +2,11 @@
 package "ryota0624/oauth2/oauth2"
 
 // Values
+pub fn build_basic_auth_header(ClientId, ClientSecret) -> String
+
+pub fn build_form_urlencoded_body(Map[String, String]) -> String
+
+pub fn parse_oauth2_error(String) -> OAuth2Error
 
 // Errors
 
@@ -36,6 +41,35 @@ pub fn CsrfToken::to_string(Self) -> String
 pub impl Eq for CsrfToken
 pub impl Show for CsrfToken
 
+pub enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+}
+pub fn HttpMethod::to_string(Self) -> String
+pub impl Eq for HttpMethod
+pub impl Show for HttpMethod
+
+pub struct HttpRequest {
+  url : String
+  http_method : HttpMethod
+  headers : Map[String, String]
+  body : String
+}
+pub fn HttpRequest::new(String, HttpMethod, Map[String, String], String) -> Self
+pub impl Show for HttpRequest
+
+pub struct HttpResponse {
+  status_code : Int
+  headers : Map[String, String]
+  body : String
+}
+pub fn HttpResponse::is_error(Self) -> Bool
+pub fn HttpResponse::is_success(Self) -> Bool
+pub fn HttpResponse::new(Int, Map[String, String], String) -> Self
+pub impl Show for HttpResponse
+
 pub enum OAuth2Error {
   InvalidRequest(String)
   InvalidClient(String)
@@ -55,6 +89,12 @@ pub fn OAuth2Error::from_error_code(String, String?) -> Self
 pub fn OAuth2Error::message(Self) -> String
 pub impl Eq for OAuth2Error
 pub impl Show for OAuth2Error
+
+pub struct OAuth2HttpClient {
+  _dummy : Unit
+}
+pub fn OAuth2HttpClient::new() -> Self
+pub async fn OAuth2HttpClient::post(Self, String, Map[String, String], String) -> Result[HttpResponse, OAuth2Error]
 
 type RedirectUrl
 pub fn RedirectUrl::new(String) -> Self
@@ -96,6 +136,7 @@ pub impl Eq for TokenUrl
 pub impl Show for TokenUrl
 
 // Type aliases
+pub type HttpHeaders = Map[String, String]
 
 // Traits
 

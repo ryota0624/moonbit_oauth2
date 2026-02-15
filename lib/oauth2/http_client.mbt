@@ -14,6 +14,14 @@ pub fn OAuth2HttpClient::new() -> OAuth2HttpClient {
 }
 
 ///|
+/// Convert HttpHeaders to mizchi/x format
+fn convert_headers(headers : HttpHeaders) -> Map[String, String] {
+  let result : Map[String, String] = {}
+  headers.each(fn(key, value) { result[key] = value })
+  result
+}
+
+///|
 /// Build application/x-www-form-urlencoded body from parameters
 pub fn build_form_urlencoded_body(params : Map[String, String]) -> String {
   let parts : Array[String] = []
@@ -36,7 +44,10 @@ fn url_encode(s : String) -> String {
 
 ///|
 /// Build Basic Authentication header value
-pub fn build_basic_auth_header(client_id : ClientId, client_secret : ClientSecret) -> String {
+pub fn build_basic_auth_header(
+  client_id : ClientId,
+  client_secret : ClientSecret,
+) -> String {
   let credentials = "\{client_id.to_string()}:\{client_secret.to_string()}"
   // TODO: Implement proper Base64 encoding
   // For now, return the raw credentials
@@ -52,14 +63,26 @@ pub fn parse_oauth2_error(body : String) -> OAuth2Error {
 }
 
 ///|
-/// Send HTTP POST request (placeholder)
-/// This will be implemented using mizchi/x in the next step
-pub fn OAuth2HttpClient::post(
+/// Send HTTP POST request using mizchi/x
+pub async fn OAuth2HttpClient::post(
   _self : OAuth2HttpClient,
-  _url : String,
-  _headers : HttpHeaders,
-  _body : String,
+  url : String,
+  headers : HttpHeaders,
+  body : String,
 ) -> Result[HttpResponse, OAuth2Error] {
-  // Placeholder implementation
-  Err(HttpError("HTTP client not yet implemented"))
+  // Convert headers to mizchi/x format
+  let http_headers = convert_headers(headers)
+
+  // Send POST request using mizchi/x
+  let (response, response_body) = @http.post(url, body, headers=http_headers) catch {
+    err => return Err(HttpError("HTTP request failed: \{err}"))
+  }
+
+  // Convert response to our HttpResponse type
+  let response_headers : HttpHeaders = {}
+  response.headers.each(fn(key, value) { response_headers[key] = value })
+
+  let body_text = response_body.text()
+
+  Ok(HttpResponse::new(response.code, response_headers, body_text))
 }
