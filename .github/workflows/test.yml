@@ -1,0 +1,84 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: MoonBit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup MoonBit
+        uses: moonbitlang/setup-moonbit@v1
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: moon install
+
+      - name: Run unit tests
+        run: moon test --target native
+
+      - name: Check code formatting
+        run: moon fmt --check
+
+      - name: Type check
+        run: moon check
+
+  integration-test:
+    name: Keycloak Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup MoonBit
+        uses: moonbitlang/setup-moonbit@v1
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: moon install
+
+      - name: Start Keycloak and PostgreSQL
+        run: docker compose up -d keycloak postgres
+
+      - name: Wait for Keycloak to be ready
+        run: |
+          echo "Waiting for Keycloak to start..."
+          for i in {1..60}; do
+            if curl -s http://localhost:8080/health/ready > /dev/null 2>&1; then
+              echo "Keycloak is ready!"
+              break
+            fi
+            echo "Waiting... ($i/60)"
+            sleep 2
+          done
+          if ! curl -s http://localhost:8080/health/ready > /dev/null 2>&1; then
+            echo "Keycloak failed to start"
+            docker compose logs keycloak
+            exit 1
+          fi
+
+      - name: Setup Keycloak (create realm, client, user)
+        run: ./scripts/setup_keycloak.sh
+
+      - name: Run Keycloak integration tests
+        run: ./scripts/test_keycloak_moonbit.sh
+
+      - name: Show Keycloak logs on failure
+        if: failure()
+        run: docker compose logs keycloak
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v

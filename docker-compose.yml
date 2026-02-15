@@ -1,15 +1,5 @@
 services:
-  # Simple mock OAuth2 server for testing
-  mock-oauth2:
-    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
-    container_name: mock-oauth2-server
-    ports:
-      - "8081:8080"
-    environment:
-      - SERVER_PORT=8080
-      - LOG_LEVEL=INFO
-
-  # Full-featured Keycloak server (for advanced testing)
+  # Keycloak OAuth2 server for integration testing
   keycloak:
     image: quay.io/keycloak/keycloak:26.5.3
     container_name: keycloak
@@ -20,7 +10,14 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
     command: start-dev --http-port=8080 --db=postgres --db-url-host=postgres --db-url-port=5432 --db-url-database=keycloak --db-username=keycloak --db-password=password
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
   postgres:
     image: postgres:15.3
     container_name: postgres
@@ -32,5 +29,10 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   postgres_data: {}
