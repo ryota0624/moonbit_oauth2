@@ -45,38 +45,18 @@ export CLIENT_SECRET="your-secret"
 moon run lib/keycloak_test
 ```
 
-### Option 2: curl スクリプトで検証
-
-**シンプルな動作確認（依存関係最小）：**
-
-```bash
-# 1. Keycloak を起動し、初期設定を自動実行
-./scripts/setup_keycloak.sh
-
-# 2. curl で OAuth2 フローをテスト
-./scripts/test_keycloak_flows.sh
-```
 
 
 ---
 
 ## 🧪 テスト方法の比較
 
-### テストツール
-
-| 項目 | MoonBit スクリプト | curl スクリプト |
-|------|--------------------|----------------|
-| **実行コマンド** | `./scripts/test_keycloak_moonbit.sh` | `./scripts/test_keycloak_flows.sh` |
-| **検証対象** | OAuth2 ライブラリの実装 | Keycloak の動作 |
-| **依存関係** | MoonBit, OAuth2 ライブラリ | curl, jq |
-| **メリット** | 型安全、ライブラリ検証 | シンプル、デバッグ容易 |
-| **推奨用途** | ライブラリ開発・検証 | インフラ動作確認 |
-
 ### 推奨フロー
 
-- 🟢 **ライブラリ開発**: MoonBit スクリプト + Keycloak
-- 🟢 **統合テスト**: MoonBit スクリプト + Keycloak
-- 🟡 **インフラ確認**: curl スクリプト + Keycloak
+- ✅ **全テスト**: MoonBit スクリプト + Keycloak
+  - ライブラリ開発
+  - 統合テスト
+  - 本番前検証
 
 ---
 
@@ -116,11 +96,10 @@ moon run lib/keycloak_test
 
 ### 1. スクリプト
 
-| スクリプト | 用途 | 実行時間 | 推奨度 |
-|-----------|------|---------|--------|
-| `setup_keycloak.sh` | Keycloak の自動セットアップ | 約1分 | ⭐⭐⭐ |
-| `test_keycloak_moonbit.sh` | MoonBit OAuth2 ライブラリ検証 | 約30秒 | ⭐⭐⭐ |
-| `test_keycloak_flows.sh` | curl での OAuth2 フロー確認 | 約30秒 | ⭐⭐ |
+| スクリプト | 用途 | 実行時間 |
+|-----------|------|---------|
+| `setup_keycloak.sh` | Keycloak の自動セットアップ | 約1分 |
+| `test_keycloak_moonbit.sh` | MoonBit OAuth2 ライブラリ検証（全フロー） | 約30秒 |
 
 ### 2. 手動テストツール
 
