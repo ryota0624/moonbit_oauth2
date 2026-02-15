@@ -10,6 +10,7 @@ pub struct TokenRequest {
   code : String
   redirect_uri : RedirectUrl
   grant_type : String
+  pkce_verifier : PkceCodeVerifier?
 } derive(Show)
 
 ///|
@@ -28,6 +29,28 @@ pub fn TokenRequest::new(
     code,
     redirect_uri,
     grant_type: "authorization_code",
+    pkce_verifier: None,
+  }
+}
+
+///|
+/// Create a new TokenRequest with PKCE support
+pub fn TokenRequest::new_with_pkce(
+  token_url : TokenUrl,
+  client_id : ClientId,
+  client_secret : ClientSecret,
+  code : String,
+  redirect_uri : RedirectUrl,
+  pkce_verifier : PkceCodeVerifier,
+) -> TokenRequest {
+  {
+    token_url,
+    client_id,
+    client_secret,
+    code,
+    redirect_uri,
+    grant_type: "authorization_code",
+    pkce_verifier: Some(pkce_verifier),
   }
 }
 
@@ -51,6 +74,12 @@ pub fn TokenRequest::build_request_body(self : TokenRequest) -> String {
 
   // client_secret (optional if using Basic auth)
   params["client_secret"] = self.client_secret.to_string()
+
+  // PKCE code_verifier (optional, for enhanced security)
+  match self.pkce_verifier {
+    Some(verifier) => params["code_verifier"] = verifier.to_string()
+    None => ()
+  }
 
   build_form_urlencoded_body(params)
 }

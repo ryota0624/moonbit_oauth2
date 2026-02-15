@@ -161,3 +161,78 @@ test "parse_int_simple invalid" {
   assert_eq(parse_int_simple("12a3"), None)
   assert_eq(parse_int_simple(""), None)
 }
+
+///|
+test "TokenRequest with PKCE" {
+  let token_url = TokenUrl::new("https://auth.example.com/token")
+  let client_id = ClientId::new("client")
+  let client_secret = ClientSecret::new("secret")
+  let code = "auth_code"
+  let redirect_uri = RedirectUrl::new("https://app.com/callback")
+
+  // Create PKCE verifier
+  let verifier = PkceCodeVerifier::new(
+    "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+  )
+
+  let request = TokenRequest::new_with_pkce(
+    token_url, client_id, client_secret, code, redirect_uri, verifier,
+  )
+
+  let body = request.build_request_body()
+
+  // Should contain PKCE code_verifier parameter
+  assert_true(
+    body.contains("code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"),
+  )
+}
+
+///|
+test "TokenRequest without PKCE" {
+  let token_url = TokenUrl::new("https://auth.example.com/token")
+  let client_id = ClientId::new("client")
+  let client_secret = ClientSecret::new("secret")
+  let code = "auth_code"
+  let redirect_uri = RedirectUrl::new("https://app.com/callback")
+
+  let request = TokenRequest::new(
+    token_url, client_id, client_secret, code, redirect_uri,
+  )
+
+  let body = request.build_request_body()
+
+  // Should NOT contain code_verifier parameter
+  assert_false(body.contains("code_verifier"))
+}
+
+///|
+test "TokenRequest with PKCE - complete flow" {
+  // Simulate complete PKCE flow
+  // 1. Generate code_verifier
+  let verifier = PkceCodeVerifier::new(
+    "test_verifier_1234567890_abcdefghijklmno",
+  )
+
+  // 2. Create code_challenge (this would be sent in authorization request)
+  let _challenge = PkceCodeChallenge::from_verifier_s256(verifier)
+
+  // 3. Create token request with verifier
+  let token_url = TokenUrl::new("https://provider.com/token")
+  let client_id = ClientId::new("my_client")
+  let client_secret = ClientSecret::new("my_secret")
+  let code = "received_auth_code"
+  let redirect_uri = RedirectUrl::new("https://app.com/callback")
+
+  let request = TokenRequest::new_with_pkce(
+    token_url, client_id, client_secret, code, redirect_uri, verifier,
+  )
+
+  let body = request.build_request_body()
+
+  // Verify all parameters are present
+  assert_true(body.contains("grant_type=authorization_code"))
+  assert_true(body.contains("code=received_auth_code"))
+  assert_true(
+    body.contains("code_verifier=test_verifier_1234567890_abcdefghijklmno"),
+  )
+}

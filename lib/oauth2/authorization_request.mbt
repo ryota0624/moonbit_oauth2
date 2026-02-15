@@ -9,6 +9,7 @@ pub struct AuthorizationRequest {
   scope : Array[Scope]
   state : CsrfToken
   response_type : String
+  pkce_challenge : PkceCodeChallenge?
 } derive(Show)
 
 ///|
@@ -20,7 +21,36 @@ pub fn AuthorizationRequest::new(
   scope : Array[Scope],
   state : CsrfToken,
 ) -> AuthorizationRequest {
-  { auth_url, client_id, redirect_uri, scope, state, response_type: "code" }
+  {
+    auth_url,
+    client_id,
+    redirect_uri,
+    scope,
+    state,
+    response_type: "code",
+    pkce_challenge: None,
+  }
+}
+
+///|
+/// Create a new AuthorizationRequest with PKCE support
+pub fn AuthorizationRequest::new_with_pkce(
+  auth_url : AuthUrl,
+  client_id : ClientId,
+  redirect_uri : RedirectUrl,
+  scope : Array[Scope],
+  state : CsrfToken,
+  pkce_challenge : PkceCodeChallenge,
+) -> AuthorizationRequest {
+  {
+    auth_url,
+    client_id,
+    redirect_uri,
+    scope,
+    state,
+    response_type: "code",
+    pkce_challenge: Some(pkce_challenge),
+  }
 }
 
 ///|
@@ -78,6 +108,19 @@ pub fn AuthorizationRequest::build_authorization_url(
   // state (recommended for CSRF protection)
   let encoded_state = url_encode(self.state.to_string())
   params.push("state=\{encoded_state}")
+
+  // PKCE parameters (optional, for enhanced security)
+  match self.pkce_challenge {
+    Some(challenge) => {
+      // code_challenge
+      let encoded_challenge = url_encode(challenge.to_string())
+      params.push("code_challenge=\{encoded_challenge}")
+
+      // code_challenge_method
+      params.push("code_challenge_method=\{challenge.method_string()}")
+    }
+    None => ()
+  }
 
   // Combine base URL with query parameters
   let query_string = params.join("&")

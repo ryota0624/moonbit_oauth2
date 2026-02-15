@@ -44,9 +44,11 @@ pub struct AuthorizationRequest {
   scope : Array[Scope]
   state : CsrfToken
   response_type : String
+  pkce_challenge : PkceCodeChallenge?
 }
 pub fn AuthorizationRequest::build_authorization_url(Self) -> String
 pub fn AuthorizationRequest::new(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken) -> Self
+pub fn AuthorizationRequest::new_with_pkce(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken, PkceCodeChallenge) -> Self
 pub impl Show for AuthorizationRequest
 
 type ClientId
@@ -174,11 +176,13 @@ pub struct TokenRequest {
   code : String
   redirect_uri : RedirectUrl
   grant_type : String
+  pkce_verifier : PkceCodeVerifier?
 }
 pub fn TokenRequest::build_request_body(Self) -> String
 pub async fn TokenRequest::execute(Self, OAuth2HttpClient) -> Result[TokenResponse, OAuth2Error]
 pub fn TokenRequest::get_auth_header(Self) -> String
 pub fn TokenRequest::new(TokenUrl, ClientId, ClientSecret, String, RedirectUrl) -> Self
+pub fn TokenRequest::new_with_pkce(TokenUrl, ClientId, ClientSecret, String, RedirectUrl, PkceCodeVerifier) -> Self
 pub impl Show for TokenRequest
 
 pub struct TokenResponse {

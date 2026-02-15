@@ -136,3 +136,70 @@ test "generate_csrf_token generates different tokens" {
   assert_true(token1.to_string().length() > 0)
   assert_true(token2.to_string().length() > 0)
 }
+
+///|
+test "AuthorizationRequest with PKCE" {
+  let auth_url = AuthUrl::new("https://auth.example.com/authorize")
+  let client_id = ClientId::new("client")
+  let redirect_uri = RedirectUrl::new("https://app.com/callback")
+  let scopes = [Scope::new("read")]
+  let state = CsrfToken::new("state123")
+
+  // Create PKCE challenge
+  let verifier = PkceCodeVerifier::new(
+    "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+  )
+  let challenge = PkceCodeChallenge::from_verifier_s256(verifier)
+
+  let request = AuthorizationRequest::new_with_pkce(
+    auth_url, client_id, redirect_uri, scopes, state, challenge,
+  )
+
+  let url = request.build_authorization_url()
+
+  // Should contain PKCE parameters
+  assert_true(url.contains("code_challenge="))
+  assert_true(url.contains("code_challenge_method=S256"))
+}
+
+///|
+test "AuthorizationRequest with PKCE - URL encoding" {
+  let auth_url = AuthUrl::new("https://auth.example.com/authorize")
+  let client_id = ClientId::new("client")
+  let redirect_uri = RedirectUrl::new("https://app.com/callback")
+  let scopes = [Scope::new("read")]
+  let state = CsrfToken::new("state123")
+
+  let verifier = PkceCodeVerifier::new("test_verifier")
+  let challenge = PkceCodeChallenge::from_verifier_s256(verifier)
+
+  let request = AuthorizationRequest::new_with_pkce(
+    auth_url, client_id, redirect_uri, scopes, state, challenge,
+  )
+
+  let url = request.build_authorization_url()
+
+  // code_challenge should be Base64URL encoded (no + / =)
+  // So it should not need URL encoding
+  assert_true(url.contains("code_challenge="))
+  assert_true(url.contains("code_challenge_method=S256"))
+}
+
+///|
+test "AuthorizationRequest without PKCE" {
+  let auth_url = AuthUrl::new("https://auth.example.com/authorize")
+  let client_id = ClientId::new("client")
+  let redirect_uri = RedirectUrl::new("https://app.com/callback")
+  let scopes = [Scope::new("read")]
+  let state = CsrfToken::new("state123")
+
+  let request = AuthorizationRequest::new(
+    auth_url, client_id, redirect_uri, scopes, state,
+  )
+
+  let url = request.build_authorization_url()
+
+  // Should NOT contain PKCE parameters
+  assert_false(url.contains("code_challenge"))
+  assert_false(url.contains("code_challenge_method"))
+}
