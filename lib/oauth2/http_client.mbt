@@ -34,12 +34,41 @@ pub fn build_form_urlencoded_body(params : Map[String, String]) -> String {
 }
 
 ///|
-/// Simple URL encoding for form data
-/// TODO: Implement proper URL encoding
+/// URL encoding for form data (RFC 3986)
+/// Encodes special characters as %XX where XX is the hex value
 fn url_encode(s : String) -> String {
-  // For now, just return the string as-is
-  // In production, this should properly encode special characters
-  s
+  let result = StringBuilder::new()
+  for i = 0; i < s.length(); i = i + 1 {
+    let ch = s[i]
+    let code = ch.to_int()
+    // Unreserved characters: A-Z, a-z, 0-9, -, _, ., ~
+    if (code >= 65 && code <= 90) ||
+      (code >= 97 && code <= 122) ||
+      (code >= 48 && code <= 57) ||
+      code == 45 ||
+      code == 95 ||
+      code == 46 ||
+      code == 126 {
+      result.write_char(ch.unsafe_to_char())
+    } else {
+      // Encode as %XX
+      result.write_string("%")
+      result.write_string(int_to_hex(code))
+    }
+  }
+  result.to_string()
+}
+
+///|
+/// Convert integer to 2-digit uppercase hex string
+fn int_to_hex(n : Int) -> String {
+  let hex_chars = "0123456789ABCDEF"
+  let high = n / 16 % 16
+  let low = n % 16
+  let result = StringBuilder::new()
+  result.write_char(hex_chars[high].unsafe_to_char())
+  result.write_char(hex_chars[low].unsafe_to_char())
+  result.to_string()
 }
 
 ///|
@@ -49,17 +78,118 @@ pub fn build_basic_auth_header(
   client_secret : ClientSecret,
 ) -> String {
   let credentials = "\{client_id.to_string()}:\{client_secret.to_string()}"
-  // TODO: Implement proper Base64 encoding
-  // For now, return the raw credentials
-  "Basic \{credentials}"
+  let encoded = base64_encode(credentials)
+  "Basic \{encoded}"
+}
+
+///|
+/// Base64 encode a string
+fn base64_encode(s : String) -> String {
+  let base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  let result = StringBuilder::new()
+  let mut i = 0
+  while i < s.length() {
+    let b1 = s[i].to_int()
+    let b2 = if i + 1 < s.length() { s[i + 1].to_int() } else { 0 }
+    let b3 = if i + 2 < s.length() { s[i + 2].to_int() } else { 0 }
+
+    // Convert 3 bytes to 4 base64 characters
+    let c1 = b1 >> 2
+    let c2 = ((b1 & 0x03) << 4) | (b2 >> 4)
+    let c3 = ((b2 & 0x0F) << 2) | (b3 >> 6)
+    let c4 = b3 & 0x3F
+
+    result.write_char(base64_chars[c1].unsafe_to_char())
+    result.write_char(base64_chars[c2].unsafe_to_char())
+
+    if i + 1 < s.length() {
+      result.write_char(base64_chars[c3].unsafe_to_char())
+    } else {
+      result.write_char('=')
+    }
+
+    if i + 2 < s.length() {
+      result.write_char(base64_chars[c4].unsafe_to_char())
+    } else {
+      result.write_char('=')
+    }
+
+    i = i + 3
+  }
+  result.to_string()
 }
 
 ///|
 /// Parse OAuth2 error from response body
+/// Expects JSON format: {"error": "...", "error_description": "..."}
 pub fn parse_oauth2_error(body : String) -> OAuth2Error {
-  // TODO: Implement proper JSON parsing
-  // For now, return a generic error
-  ParseError("Failed to parse error response: \{body}")
+  // Simple JSON parsing for OAuth2 error response
+  let error_code = extract_json_string_value(body, "error")
+  let error_description = extract_json_string_value(body, "error_description")
+
+  match error_code {
+    Some(code) => OAuth2Error::from_error_code(code, error_description)
+    None => ParseError("Failed to parse error response: \{body}")
+  }
+}
+
+///|
+/// Extract string value from JSON-like text
+/// Simple implementation for OAuth2 error responses
+fn extract_json_string_value(json : String, key : String) -> String? {
+  // Look for "key":"value" or "key": "value"
+  let search_pattern = "\"\{key}\""
+  let mut start_index = -1
+
+  // Find the key
+  for i = 0; i < json.length() - key.length() - 2; i = i + 1 {
+    let mut matches = true
+    for j = 0; j < search_pattern.length(); j = j + 1 {
+      if json[i + j].to_int() != search_pattern[j].to_int() {
+        matches = false
+        break
+      }
+    }
+    if matches {
+      start_index = i + search_pattern.length()
+      break
+    }
+  }
+
+  if start_index == -1 {
+    return None
+  }
+
+  // Skip whitespace and colon
+  while start_index < json.length() &&
+        (json[start_index].to_int() == 32 || json[start_index].to_int() == 58) {
+    start_index = start_index + 1
+  }
+
+  // Skip whitespace after colon
+  while start_index < json.length() && json[start_index].to_int() == 32 {
+    start_index = start_index + 1
+  }
+
+  // Expect opening quote
+  if start_index >= json.length() || json[start_index].to_int() != 34 {
+    return None
+  }
+  start_index = start_index + 1
+
+  // Find closing quote
+  let mut end_index = start_index
+  while end_index < json.length() && json[end_index].to_int() != 34 {
+    end_index = end_index + 1
+  }
+
+  if end_index >= json.length() {
+    return None
+  }
+
+  // Extract the value
+  let value = json[start_index:end_index].to_string() catch { _ => return None }
+  Some(value)
 }
 
 ///|
