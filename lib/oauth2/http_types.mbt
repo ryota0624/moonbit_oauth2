@@ -3,7 +3,7 @@
 ///|
 /// HttpMethod represents HTTP request methods
 /// Note: GET, POST, PUT, DELETE variants are defined for future use
-pub enum HttpMethod {
+pub(all) enum HttpMethod {
   GET
   POST
   PUT
