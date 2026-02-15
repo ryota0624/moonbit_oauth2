@@ -122,6 +122,33 @@ pub struct OAuth2HttpClient {
 pub fn OAuth2HttpClient::new() -> Self
 pub async fn OAuth2HttpClient::post(Self, String, Map[String, String], String) -> Result[HttpResponse, OAuth2Error]
 
+pub struct PkceCodeChallenge {
+  value : String
+  method : PkceCodeChallengeMethod
+}
+pub fn PkceCodeChallenge::from_verifier_plain(PkceCodeVerifier) -> Self
+pub fn PkceCodeChallenge::from_verifier_s256(PkceCodeVerifier) -> Self
+pub fn PkceCodeChallenge::method_string(Self) -> String
+pub fn PkceCodeChallenge::to_string(Self) -> String
+pub impl Eq for PkceCodeChallenge
+pub impl Show for PkceCodeChallenge
+
+pub enum PkceCodeChallengeMethod {
+  Plain
+  S256
+}
+pub impl Eq for PkceCodeChallengeMethod
+pub impl Show for PkceCodeChallengeMethod
+
+pub struct PkceCodeVerifier {
+  value : String
+}
+pub fn PkceCodeVerifier::new(String) -> Self
+pub fn PkceCodeVerifier::new_random() -> Self
+pub fn PkceCodeVerifier::to_string(Self) -> String
+pub impl Eq for PkceCodeVerifier
+pub impl Show for PkceCodeVerifier
+
 type RedirectUrl
 pub fn RedirectUrl::new(String) -> Self
 pub fn RedirectUrl::to_string(Self) -> String
