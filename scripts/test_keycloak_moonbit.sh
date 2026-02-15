@@ -83,26 +83,9 @@ export CLIENT_ID="${CLIENT_ID:-test-client}"
 export TEST_USERNAME="${TEST_USERNAME:-testuser}"
 export TEST_PASSWORD="${TEST_PASSWORD:-testpass123}"
 
-echo -e "${YELLOW}MoonBit プログラムをビルド中...${NC}"
-echo ""
-
-# ビルド
+# 実行（moon run が自動的にビルドも行う）
 cd "$(dirname "$0")/.."
-moon build --target native lib/keycloak_test/main.mbt
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ ビルドに失敗しました${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✓ ビルド完了${NC}"
-echo ""
-
-# 実行
-echo -e "${YELLOW}テストを実行中...${NC}"
-echo ""
-
-./_build/native/debug/build/keycloak_test/keycloak_test.exe
+moon run lib/keycloak_test
 
 echo ""
 echo -e "${GREEN}=========================================${NC}"

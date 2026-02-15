@@ -44,11 +44,8 @@ MoonBit の OAuth2 実装を使用して Keycloak の動作を検証するテス
 # 1. Client Secret を環境変数に設定
 export CLIENT_SECRET="your-client-secret-here"
 
-# 2. ビルド
-moon build --target native lib/keycloak_test/main.mbt
-
-# 3. 実行
-./target/native/debug/build/keycloak_test/keycloak_test.exe
+# 2. 実行（自動的にビルドされる）
+moon run lib/keycloak_test
 ```
 
 ### Option 3: カスタム設定で実行
@@ -64,7 +61,11 @@ export CLIENT_SECRET="my-secret"
 export TEST_USERNAME="myuser"
 export TEST_PASSWORD="mypassword"
 
+# スクリプト経由
 ./scripts/test_keycloak_moonbit.sh
+
+# または直接実行
+moon run lib/keycloak_test
 ```
 
 ## 環境変数
@@ -153,7 +154,7 @@ Test 2: Password Grant Flow
 
 ### ビルドエラー
 
-**症状**: `moon build` が失敗する
+**症状**: `moon run` が失敗する
 
 **対処**:
 ```bash
@@ -161,8 +162,8 @@ Test 2: Password Grant Flow
 moon install
 
 # クリーンビルド
-rm -rf target/
-moon build --target native lib/keycloak_test/main.mbt
+rm -rf _build/
+moon run lib/keycloak_test
 ```
 
 ### CLIENT_SECRET エラー
