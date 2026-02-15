@@ -96,10 +96,7 @@ async fn test_client_credentials(config : Config) -> Unit {
 
   // ClientCredentialsRequest を作成
   let request = @oauth2.ClientCredentialsRequest::new(
-    token_url,
-    client_id,
-    client_secret,
-    scopes,
+    token_url, client_id, client_secret, scopes,
   )
 
   println("リクエスト送信中...")
@@ -144,12 +141,14 @@ async fn test_client_credentials(config : Config) -> Unit {
           let valid_expiry = expires > 0 && expires <= 3600
           print_result("有効期限", valid_expiry, "expires_in=\{expires}秒")
         }
-        None => print_result("有効期限", false, "有効期限が指定されていません")
+        None =>
+          print_result(
+            "有効期限", false, "有効期限が指定されていません",
+          )
       }
     }
-    Err(error) => {
+    Err(error) =>
       print_result("Client Credentials Flow", false, error.message())
-    }
   }
 }
 
@@ -241,7 +240,9 @@ async fn test_password_grant(config : Config) -> Unit {
 
       // UserInfo エンドポイントでユーザー情報を取得
       println("")
-      println("📋 UserInfo エンドポイントでユーザー情報を取得:")
+      println(
+        "📋 UserInfo エンドポイントでユーザー情報を取得:",
+      )
       let userinfo_url = "\{config.base_url}/protocol/openid-connect/userinfo"
       println("  URL: \{userinfo_url}")
 
@@ -272,9 +273,7 @@ async fn test_password_grant(config : Config) -> Unit {
         print_result("UserInfo 取得", false, "HTTP \{resp.code}")
       }
     }
-    Err(error) => {
-      print_result("Password Grant Flow", false, error.message())
-    }
+    Err(error) => print_result("Password Grant Flow", false, error.message())
   }
 }
 
@@ -299,16 +298,13 @@ fn test_authorization_code_preparation(config : Config) -> Unit {
 
   // PKCE を生成
   let pkce_verifier = @oauth2.PkceCodeVerifier::new_random()
-  let pkce_challenge = @oauth2.PkceCodeChallenge::from_verifier_s256(pkce_verifier)
+  let pkce_challenge = @oauth2.PkceCodeChallenge::from_verifier_s256(
+    pkce_verifier,
+  )
 
   // AuthorizationRequest を作成（PKCE 付き）
   let request = @oauth2.AuthorizationRequest::new_with_pkce(
-    auth_url,
-    client_id,
-    redirect_uri,
-    scopes,
-    state,
-    pkce_challenge,
+    auth_url, client_id, redirect_uri, scopes, state, pkce_challenge,
   )
 
   // 認可 URL を構築
@@ -322,7 +318,9 @@ fn test_authorization_code_preparation(config : Config) -> Unit {
   println("🌐 ブラウザでの動作確認手順:")
   println("  1. 上記 URL をブラウザで開く")
   println("  2. Keycloak ログイン画面が表示される")
-  println("  3. \{config.test_username} / \{config.test_password} でログイン")
+  println(
+    "  3. \{config.test_username} / \{config.test_password} でログイン",
+  )
   println("  4. リダイレクト URI にコールバックされる")
   println("  5. URL から認可コード (code) を取得")
   println("")
@@ -355,25 +353,32 @@ async fn test_error_handling(config : Config) -> Unit {
   let scopes = [@oauth2.Scope::new("openid")]
 
   let request = @oauth2.ClientCredentialsRequest::new(
-    token_url,
-    client_id,
-    invalid_secret,
-    scopes,
+    token_url, client_id, invalid_secret, scopes,
   )
 
   let http_client = @oauth2.OAuth2HttpClient::new()
   let result = request.execute(http_client)
 
   match result {
-    Ok(_) => print_result("無効な Client Secret", false, "エラーが返されるべき")
+    Ok(_) =>
+      print_result(
+        "無効な Client Secret", false, "エラーが返されるべき",
+      )
     Err(error) => {
       let msg = error.message()
       let msg_lower = msg.to_string().to_lower()
       // InvalidClient または Unauthorized エラーを期待
-      if msg_lower.contains("invalid_client") || msg_lower.contains("unauthorized") {
-        print_result("無効な Client Secret", true, "正しくエラーを返しました")
+      if msg_lower.contains("invalid_client") ||
+        msg_lower.contains("unauthorized") {
+        print_result(
+          "無効な Client Secret", true, "正しくエラーを返しました",
+        )
       } else {
-        print_result("無効な Client Secret", false, "予期しないエラー: \{msg}")
+        print_result(
+          "無効な Client Secret",
+          false,
+          "予期しないエラー: \{msg}",
+        )
       }
     }
   }
@@ -394,15 +399,25 @@ async fn test_error_handling(config : Config) -> Unit {
   let result2 = password_request.execute(http_client2)
 
   match result2 {
-    Ok(_) => print_result("無効なパスワード", false, "エラーが返されるべき")
+    Ok(_) =>
+      print_result(
+        "無効なパスワード", false, "エラーが返されるべき",
+      )
     Err(error) => {
       let msg = error.message()
       let msg_lower = msg.to_string().to_lower()
       // InvalidGrant エラーを期待
-      if msg_lower.contains("invalid_grant") || msg_lower.contains("invalid user") {
-        print_result("無効なパスワード", true, "正しくエラーを返しました")
+      if msg_lower.contains("invalid_grant") ||
+        msg_lower.contains("invalid user") {
+        print_result(
+          "無効なパスワード", true, "正しくエラーを返しました",
+        )
       } else {
-        print_result("無効なパスワード", false, "予期しないエラー: \{msg}")
+        print_result(
+          "無効なパスワード",
+          false,
+          "予期しないエラー: \{msg}",
+        )
       }
     }
   }
@@ -411,9 +426,15 @@ async fn test_error_handling(config : Config) -> Unit {
 ///|
 /// メインエントリポイント
 async fn main {
-  println("\u{1b}[1;36m============================================================\u{1b}[0m")
-  println("\u{1b}[1;36mKeycloak OAuth2 検証スクリプト (MoonBit)\u{1b}[0m")
-  println("\u{1b}[1;36m============================================================\u{1b}[0m")
+  println(
+    "\u{1b}[1;36m============================================================\u{1b}[0m",
+  )
+  println(
+    "\u{1b}[1;36mKeycloak OAuth2 検証スクリプト (MoonBit)\u{1b}[0m",
+  )
+  println(
+    "\u{1b}[1;36m============================================================\u{1b}[0m",
+  )
   println("")
 
   // 設定を読み込み
@@ -421,7 +442,9 @@ async fn main {
 
   // Client Secret が設定されているか確認
   if config.client_secret == "" {
-    println("\u{1b}[31m✗ エラー: CLIENT_SECRET が設定されていません\u{1b}[0m")
+    println(
+      "\u{1b}[31m✗ エラー: CLIENT_SECRET が設定されていません\u{1b}[0m",
+    )
     println("")
     println("以下のコマンドを実行してください:")
     println("  export CLIENT_SECRET=\"your-client-secret-here\"")
@@ -459,8 +482,12 @@ async fn main {
   // サマリー
   print_separator("テスト完了")
   println("")
-  println("✓ MoonBit OAuth2 実装で Keycloak の動作を検証しました")
+  println(
+    "✓ MoonBit OAuth2 実装で Keycloak の動作を検証しました",
+  )
   println("")
-  println("📖 詳細な手順は docs/testing/keycloak_verification_guide.md を参照")
+  println(
+    "📖 詳細な手順は docs/testing/keycloak_verification_guide.md を参照",
+  )
   println("")
 }

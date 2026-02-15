@@ -250,7 +250,11 @@ pub async fn OAuth2HttpClient::post(
   println("  Status: \{response.code}")
   println("  Body length: \{body_text.length()}")
   if body_text.length() > 0 {
-    let preview_len = if body_text.length() < 100 { body_text.length() } else { 100 }
+    let preview_len = if body_text.length() < 100 {
+      body_text.length()
+    } else {
+      100
+    }
     println("  Body (first 100 chars): \{body_text[0:preview_len].to_string()}")
   }
 
