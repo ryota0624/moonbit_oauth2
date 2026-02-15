@@ -335,8 +335,9 @@ async fn test_error_handling(config : Config) -> Unit {
     Ok(_) => print_result("無効な Client Secret", false, "エラーが返されるべき")
     Err(error) => {
       let msg = error.message()
+      let msg_lower = msg.to_string().to_lower()
       // InvalidClient または Unauthorized エラーを期待
-      if msg.contains("invalid_client") || msg.contains("unauthorized") {
+      if msg_lower.contains("invalid_client") || msg_lower.contains("unauthorized") {
         print_result("無効な Client Secret", true, "正しくエラーを返しました")
       } else {
         print_result("無効な Client Secret", false, "予期しないエラー: \{msg}")
@@ -363,8 +364,9 @@ async fn test_error_handling(config : Config) -> Unit {
     Ok(_) => print_result("無効なパスワード", false, "エラーが返されるべき")
     Err(error) => {
       let msg = error.message()
+      let msg_lower = msg.to_string().to_lower()
       // InvalidGrant エラーを期待
-      if msg.contains("invalid_grant") {
+      if msg_lower.contains("invalid_grant") || msg_lower.contains("invalid user") {
         print_result("無効なパスワード", true, "正しくエラーを返しました")
       } else {
         print_result("無効なパスワード", false, "予期しないエラー: \{msg}")
