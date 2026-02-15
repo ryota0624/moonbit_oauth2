@@ -31,12 +31,6 @@ Add to your `moon.mod.json`:
 }
 ```
 
-Then run:
-
-```bash
-moon install
-```
-
 ## Quick Start
 
 ### Client Credentials Flow
