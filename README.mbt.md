@@ -129,9 +129,11 @@ moon test
 
 This project uses GitHub Actions for continuous integration:
 
-- **Unit Tests**: Run on every push and pull request
-- **Integration Tests**: Run with Keycloak after unit tests pass
+- **Unit Tests**: Run on both Native and JS targets
+- **Integration Tests**: Run with Keycloak using JS target after unit tests pass
 - **Code Quality**: Formatting and type checking
+
+The integration tests use the JS target to verify cross-platform compatibility.
 
 See [`.github/workflows/test.yml`](.github/workflows/test.yml) for details.
 
