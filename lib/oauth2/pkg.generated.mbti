@@ -2,6 +2,8 @@
 package "ryota0624/oauth2/oauth2"
 
 // Values
+pub fn base64url_encode(String) -> String
+
 pub fn build_basic_auth_header(ClientId, ClientSecret) -> String
 
 pub fn build_form_urlencoded_body(Map[String, String]) -> String

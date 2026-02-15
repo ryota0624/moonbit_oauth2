@@ -189,3 +189,60 @@ test "extract_json_string_value with spaces" {
 test "extract_json_string_value not found" {
   assert_eq(extract_json_string_value("{\"other\":\"value\"}", "key"), None)
 }
+
+///|
+test "base64url_encode - basic strings" {
+  // Base64URL encoding removes padding and uses URL-safe chars
+  assert_eq(base64url_encode("hello"), "aGVsbG8") // No padding
+  assert_eq(base64url_encode("Man"), "TWFu")
+  assert_eq(base64url_encode("Ma"), "TWE") // No padding
+  assert_eq(base64url_encode("M"), "TQ") // No padding
+}
+
+///|
+test "base64url_encode - URL-safe characters" {
+  // Standard Base64 uses + and /, Base64URL uses - and _
+  // Test with data that would produce + and / in standard Base64
+
+  // Character code 62 (>) maps to + in standard Base64, - in Base64URL
+  // Character code 63 (?) maps to / in standard Base64, _ in Base64URL
+
+  // Test string that produces + and / in standard Base64
+  let test_str = "???>>>???"
+  let result = base64url_encode(test_str)
+
+  // Should not contain + or /
+  assert_false(result.contains("+"))
+  assert_false(result.contains("/"))
+
+  // Should not contain = padding
+  assert_false(result.contains("="))
+}
+
+///|
+test "base64url_encode - no padding" {
+  // Base64URL should not include padding characters
+  let result1 = base64url_encode("M") // Would be "TQ==" in standard
+  let result2 = base64url_encode("Ma") // Would be "TWE=" in standard
+
+  assert_false(result1.contains("="))
+  assert_false(result2.contains("="))
+  assert_eq(result1, "TQ")
+  assert_eq(result2, "TWE")
+}
+
+///|
+test "base64url_encode - PKCE code_verifier example" {
+  // Typical PKCE code_verifier is 43-128 characters
+  // Test with a realistic example
+  let code_verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+  let result = base64url_encode(code_verifier)
+
+  // Should be valid Base64URL (no + / =)
+  assert_false(result.contains("+"))
+  assert_false(result.contains("/"))
+  assert_false(result.contains("="))
+
+  // Should have reasonable length
+  assert_true(result.length() > 0)
+}

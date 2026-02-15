@@ -85,7 +85,29 @@ pub fn build_basic_auth_header(
 ///|
 /// Base64 encode a string
 fn base64_encode(s : String) -> String {
-  let base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  base64_encode_internal(s, false, true)
+}
+
+///|
+/// Base64URL encode a string (RFC 4648 Section 5)
+/// Uses URL-safe alphabet: replaces + with - and / with _
+/// Removes padding (=) characters
+pub fn base64url_encode(s : String) -> String {
+  base64_encode_internal(s, true, false)
+}
+
+///|
+/// Internal Base64 encoding with options for standard vs URL-safe encoding
+fn base64_encode_internal(
+  s : String,
+  use_url_safe : Bool,
+  add_padding : Bool,
+) -> String {
+  let base64_chars = if use_url_safe {
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+  } else {
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  }
   let result = StringBuilder::new()
   let mut i = 0
   while i < s.length() {
@@ -104,13 +126,13 @@ fn base64_encode(s : String) -> String {
 
     if i + 1 < s.length() {
       result.write_char(base64_chars[c3].unsafe_to_char())
-    } else {
+    } else if add_padding {
       result.write_char('=')
     }
 
     if i + 2 < s.length() {
       result.write_char(base64_chars[c4].unsafe_to_char())
-    } else {
+    } else if add_padding {
       result.write_char('=')
     }
 
