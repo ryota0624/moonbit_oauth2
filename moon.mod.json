@@ -7,5 +7,11 @@
   "keywords": [],
   "source": "lib",
   "description": "",
-  "preferred-target": "native"
+  "preferred-target": "native",
+  "deps": {
+    "mizchi/x": {
+      "git": "https://github.com/mizchi/x.git",
+      "rev": "main"
+    }
+  }
 }

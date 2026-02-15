@@ -21,14 +21,20 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
 - [x] 基本型のユニットテスト（20テスト全て成功）
 
 ## Step 2: HTTPクライアント抽象化
-- [ ] HTTPクライアントインターフェースの設計
-  - [ ] HttpClient trait/インターフェース定義
-  - [ ] HttpRequest/HttpResponse型定義
-- [ ] Native環境用HTTPクライアント実装
-  - [ ] FFI経由でのHTTPクライアント実装検討
-  - [ ] または既存MoonBitライブラリの調査と活用
-- [ ] JS環境用HTTPクライアント実装（fetch API）
-- [ ] HTTPクライアントの基本テスト
+- [x] mizchi/x依存関係の追加
+  - [x] moon.mod.jsonの更新
+  - [x] GitHubから直接取得する設定
+- [x] HTTP型定義の実装
+  - [x] HttpMethod enum
+  - [x] HttpHeaders type alias
+  - [x] HttpRequest/HttpResponse型定義
+- [x] 基本的なHTTPクライアント機能
+  - [x] OAuth2HttpClient構造体
+  - [x] build_form_urlencoded_body関数
+  - [x] build_basic_auth_header関数
+  - [x] parse_oauth2_error関数（プレースホルダー）
+- [x] HTTPクライアントの基本テスト（9テスト全て成功）
+- [ ] mizchi/xを使った実際のHTTP POST実装（次のステップ）
 
 ## Step 3: 認可コードフロー実装
 - [ ] AuthorizationRequest実装
