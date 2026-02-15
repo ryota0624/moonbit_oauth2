@@ -36,7 +36,7 @@ pub fn build_form_urlencoded_body(params : Map[String, String]) -> String {
 ///|
 /// URL encoding for form data (RFC 3986)
 /// Encodes special characters as %XX where XX is the hex value
-fn url_encode(s : String) -> String {
+pub fn url_encode(s : String) -> String {
   let result = StringBuilder::new()
   for i = 0; i < s.length(); i = i + 1 {
     let ch = s[i]
@@ -61,7 +61,7 @@ fn url_encode(s : String) -> String {
 
 ///|
 /// Convert integer to 2-digit uppercase hex string
-fn int_to_hex(n : Int) -> String {
+pub fn int_to_hex(n : Int) -> String {
   let hex_chars = "0123456789ABCDEF"
   let high = n / 16 % 16
   let low = n % 16

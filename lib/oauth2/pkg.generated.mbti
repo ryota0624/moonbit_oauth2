@@ -6,7 +6,13 @@ pub fn build_basic_auth_header(ClientId, ClientSecret) -> String
 
 pub fn build_form_urlencoded_body(Map[String, String]) -> String
 
+pub fn generate_csrf_token() -> CsrfToken
+
+pub fn int_to_hex(Int) -> String
+
 pub fn parse_oauth2_error(String) -> OAuth2Error
+
+pub fn url_encode(String) -> String
 
 // Errors
 
@@ -22,6 +28,18 @@ pub fn AuthUrl::new(String) -> Self
 pub fn AuthUrl::to_string(Self) -> String
 pub impl Eq for AuthUrl
 pub impl Show for AuthUrl
+
+pub struct AuthorizationRequest {
+  auth_url : AuthUrl
+  client_id : ClientId
+  redirect_uri : RedirectUrl
+  scope : Array[Scope]
+  state : CsrfToken
+  response_type : String
+}
+pub fn AuthorizationRequest::build_authorization_url(Self) -> String
+pub fn AuthorizationRequest::new(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken) -> Self
+pub impl Show for AuthorizationRequest
 
 type ClientId
 pub fn ClientId::new(String) -> Self
