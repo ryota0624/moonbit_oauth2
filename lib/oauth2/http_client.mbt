@@ -144,62 +144,18 @@ pub fn parse_oauth2_error(body : String) -> OAuth2Error {
 }
 
 ///|
-/// Extract string value from JSON-like text
-/// Simple implementation for OAuth2 error responses
+/// Extract string value from JSON using @json package
 fn extract_json_string_value(json : String, key : String) -> String? {
-  // Look for "key":"value" or "key": "value"
-  let search_pattern = "\"\{key}\""
-  let mut start_index = -1
+  let parsed = @json.parse(json) catch { _ => return None }
 
-  // Find the key
-  for i = 0; i < json.length() - key.length() - 2; i = i + 1 {
-    let mut matches = true
-    for j = 0; j < search_pattern.length(); j = j + 1 {
-      if json[i + j].to_int() != search_pattern[j].to_int() {
-        matches = false
-        break
+  match parsed {
+    Object(map) =>
+      match map.get(key) {
+        Some(String(s)) => Some(s)
+        _ => None
       }
-    }
-    if matches {
-      start_index = i + search_pattern.length()
-      break
-    }
+    _ => None
   }
-
-  if start_index == -1 {
-    return None
-  }
-
-  // Skip whitespace and colon
-  while start_index < json.length() &&
-        (json[start_index].to_int() == 32 || json[start_index].to_int() == 58) {
-    start_index = start_index + 1
-  }
-
-  // Skip whitespace after colon
-  while start_index < json.length() && json[start_index].to_int() == 32 {
-    start_index = start_index + 1
-  }
-
-  // Expect opening quote
-  if start_index >= json.length() || json[start_index].to_int() != 34 {
-    return None
-  }
-  start_index = start_index + 1
-
-  // Find closing quote
-  let mut end_index = start_index
-  while end_index < json.length() && json[end_index].to_int() != 34 {
-    end_index = end_index + 1
-  }
-
-  if end_index >= json.length() {
-    return None
-  }
-
-  // Extract the value
-  let value = json[start_index:end_index].to_string() catch { _ => return None }
-  Some(value)
 }
 
 ///|

@@ -125,9 +125,14 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
   - [x] new_with_debug()コンストラクタ追加
   - [x] 全124テスト成功確認
   - 実施工数: 30分
- - [ ] jsonからの値の取り出しはjsonパッケージを使う様にする
-  - [ ] extract_json_int_value
-  - [ ] extract_json_string_value
+ - [x] jsonからの値の取り出しはjsonパッケージを使う様にする ✅ **完了**
+   - [x] extract_json_string_value: @json.parseに置き換え（53行→12行）
+   - [x] extract_json_int_value: @json.parseに置き換え（78行→12行）
+   - [x] parse_int_simple削除（19行）
+   - [x] moonbitlang/core/json依存関係を追加
+   - [x] 全111テスト成功確認（Native/JS両方）
+   - [x] 公開API変更なし
+   - 実施工数: 20分
  - [x] sha256の実装はcryptoパッケージを使う様にする ✅ **完了**
    - [x] moonbitlang/x/crypto依存関係を追加
    - [x] pkce.mbtでライブラリ実装を使用
