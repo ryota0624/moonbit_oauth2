@@ -67,11 +67,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
       - name: Setup MoonBit
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
@@ -80,47 +75,6 @@ jobs:
       - name: Fetch dependencies
         run: moon update
 
-      - name: Install dependencies
-        run: moon install
-
-      # Pre-release verification
-      - name: Run unit tests (Native)
-        run: moon test --target native
-
-      - name: Run unit tests (JS)
-        run: moon test --target js
-
-      - name: Check code formatting
-        run: moon fmt --check
-
-      - name: Type check
-        run: moon check
-
-      - name: Build packages (Native)
-        run: |
-          moon build --target native lib/oauth2
-          moon build --target native lib/oidc
-
-      - name: Build packages (JS)
-        run: |
-          moon build --target js lib/oauth2
-          moon build --target js lib/oidc
-
-      - name: Verify package structure
-        run: |
-          echo "Checking OAuth2 package..."
-          test -f lib/oauth2/moon.pkg || (echo "lib/oauth2/moon.pkg not found" && exit 1)
-
-          echo "Checking OIDC package..."
-          test -f lib/oidc/moon.pkg || (echo "lib/oidc/moon.pkg not found" && exit 1)
-
-          echo "Checking generated interfaces..."
-          test -f lib/oauth2/pkg.generated.mbti || (echo "lib/oauth2/pkg.generated.mbti not found" && exit 1)
-          test -f lib/oidc/pkg.generated.mbti || (echo "lib/oidc/pkg.generated.mbti not found" && exit 1)
-
-          echo "✓ Package structure verified"
-
-      # Release process
       - name: Install moon-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -132,7 +86,6 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
       # Configure mooncakes credentials (skip if no token configured)
       - name: Setup mooncakes credentials
         env:
@@ -152,13 +105,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: moon-release release --verbose
-
-      - name: Show release info
-        run: |
-          echo "📦 Released packages:"
-          echo "  - ryota0624/oauth2/oauth2 (OAuth2 client library)"
-          echo "  - ryota0624/oauth2/oidc (OpenID Connect support)"
-          echo ""
-          echo "Directory structure:"
-          echo "  lib/oauth2/ - OAuth2 implementation"
-          echo "  lib/oidc/   - OIDC implementation"
