@@ -10,6 +10,7 @@ pub struct AuthorizationRequest {
   state : CsrfToken
   response_type : String
   pkce_challenge : PkceCodeChallenge?
+  nonce : Nonce? // OIDC: nonce parameter for replay attack protection
 } derive(Show)
 
 ///|
@@ -29,6 +30,7 @@ pub fn AuthorizationRequest::new(
     state,
     response_type: "code",
     pkce_challenge: None,
+    nonce: None,
   }
 }
 
@@ -50,6 +52,7 @@ pub fn AuthorizationRequest::new_with_pkce(
     state,
     response_type: "code",
     pkce_challenge: Some(pkce_challenge),
+    nonce: None,
   }
 }
 
@@ -60,6 +63,24 @@ pub fn generate_csrf_token() -> CsrfToken {
   let timestamp = "@builtin.timestamp_now"
   let random_suffix = generate_random_suffix()
   CsrfToken::new("state_\{timestamp}_\{random_suffix}")
+}
+
+///|
+/// Generate a random nonce for OIDC
+/// Uses cryptographically secure random number generator (Chacha8 CSPRNG)
+pub fn generate_nonce() -> Nonce {
+  let timestamp = "@builtin.timestamp_now"
+  let random_suffix = generate_random_suffix()
+  Nonce::new("nonce_\{timestamp}_\{random_suffix}")
+}
+
+///|
+/// Add nonce to an existing AuthorizationRequest (OIDC)
+pub fn AuthorizationRequest::with_nonce(
+  self : AuthorizationRequest,
+  nonce : Nonce,
+) -> AuthorizationRequest {
+  { ..self, nonce: Some(nonce) }
 }
 
 ///|
@@ -122,6 +143,15 @@ pub fn AuthorizationRequest::build_authorization_url(
 
       // code_challenge_method
       params.push("code_challenge_method=\{challenge.method_string()}")
+    }
+    None => ()
+  }
+
+  // Nonce parameter (OIDC, for replay attack protection)
+  match self.nonce {
+    Some(nonce) => {
+      let encoded_nonce = url_encode(nonce.to_string())
+      params.push("nonce=\{encoded_nonce}")
     }
     None => ()
   }

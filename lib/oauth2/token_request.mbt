@@ -140,6 +140,7 @@ pub fn parse_token_response(
       let expires_in = extract_json_int_value(json, "expires_in")
       let refresh_token_str = extract_json_string_value(json, "refresh_token")
       let scope = extract_json_string_value(json, "scope")
+      let id_token = extract_json_string_value(json, "id_token")
 
       // Create tokens
       let access_token = AccessToken::new(token)
@@ -149,7 +150,7 @@ pub fn parse_token_response(
       }
 
       let response = TokenResponse::new(
-        access_token, type_, expires_in, refresh_token, scope,
+        access_token, type_, expires_in, refresh_token, scope, id_token,
       )
       Ok(response)
     }

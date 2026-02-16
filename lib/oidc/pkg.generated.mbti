@@ -1,0 +1,107 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ryota0624/oauth2/oidc"
+
+import {
+  "ryota0624/oauth2/oauth2",
+}
+
+// Values
+pub fn get_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken, @oauth2.OAuth2Error]
+
+pub fn parse_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken?, @oauth2.OAuth2Error]
+
+pub fn parse_userinfo(String) -> Result[UserInfo, @oauth2.OAuth2Error]
+
+// Errors
+
+// Types and methods
+pub struct IdToken {
+  raw : String
+  header : JwtHeader
+  payload : IdTokenClaims
+  signature : String
+}
+pub fn IdToken::audience(Self) -> String
+pub fn IdToken::claims(Self) -> IdTokenClaims
+pub fn IdToken::email(Self) -> String?
+pub fn IdToken::expiration(Self) -> Int64
+pub fn IdToken::header(Self) -> JwtHeader
+pub fn IdToken::issued_at(Self) -> Int64
+pub fn IdToken::issuer(Self) -> String
+pub fn IdToken::name(Self) -> String?
+pub fn IdToken::nonce(Self) -> String?
+pub fn IdToken::parse(String) -> Result[Self, @oauth2.OAuth2Error]
+pub fn IdToken::raw(Self) -> String
+pub fn IdToken::subject(Self) -> String
+pub impl Show for IdToken
+
+pub struct IdTokenClaims {
+  iss : String
+  sub : String
+  aud : String
+  exp : Int64
+  iat : Int64
+  auth_time : Int64?
+  nonce : String?
+  name : String?
+  given_name : String?
+  family_name : String?
+  email : String?
+  email_verified : Bool?
+  picture : String?
+  locale : String?
+}
+pub impl Show for IdTokenClaims
+
+pub struct JwtHeader {
+  alg : String
+  typ : String
+  kid : String?
+}
+pub impl Eq for JwtHeader
+pub impl Show for JwtHeader
+
+pub struct UserInfo {
+  sub : String
+  name : String?
+  given_name : String?
+  family_name : String?
+  email : String?
+  email_verified : Bool?
+  picture : String?
+  profile : String?
+  locale : String?
+  updated_at : Int64?
+}
+pub fn UserInfo::email(Self) -> String?
+pub fn UserInfo::email_verified(Self) -> Bool?
+pub fn UserInfo::family_name(Self) -> String?
+pub fn UserInfo::given_name(Self) -> String?
+pub fn UserInfo::locale(Self) -> String?
+pub fn UserInfo::name(Self) -> String?
+pub fn UserInfo::picture(Self) -> String?
+pub fn UserInfo::profile(Self) -> String?
+pub fn UserInfo::subject(Self) -> String
+pub fn UserInfo::updated_at(Self) -> Int64?
+pub impl Show for UserInfo
+
+pub struct UserInfoRequest {
+  userinfo_url : UserInfoUrl
+  access_token : @oauth2.AccessToken
+}
+pub async fn UserInfoRequest::execute(Self, @oauth2.OAuth2HttpClient) -> Result[UserInfo, @oauth2.OAuth2Error]
+pub fn UserInfoRequest::new(UserInfoUrl, @oauth2.AccessToken) -> Self
+pub impl Show for UserInfoRequest
+
+pub struct UserInfoUrl {
+  url : String
+}
+pub fn UserInfoUrl::new(String) -> Self
+pub fn UserInfoUrl::to_string(Self) -> String
+pub impl Eq for UserInfoUrl
+pub impl Show for UserInfoUrl
+
+// Type aliases
+
+// Traits
+

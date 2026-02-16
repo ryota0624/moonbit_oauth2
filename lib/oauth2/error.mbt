@@ -76,3 +76,21 @@ pub fn OAuth2Error::message(self : OAuth2Error) -> String {
     Other(msg) => msg
   }
 }
+
+///|
+/// Create a parse error
+pub fn OAuth2Error::new_parse_error(msg : String) -> OAuth2Error {
+  ParseError(msg)
+}
+
+///|
+/// Create an HTTP error
+pub fn OAuth2Error::new_http_error(msg : String) -> OAuth2Error {
+  HttpError(msg)
+}
+
+///|
+/// Create a generic error
+pub fn OAuth2Error::new_other(msg : String) -> OAuth2Error {
+  Other(msg)
+}
