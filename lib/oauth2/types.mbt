@@ -114,6 +114,36 @@ pub fn Scope::to_string(self : Scope) -> String {
   self.value
 }
 
+///|
+/// OIDC standard scope: openid (required for OIDC)
+pub fn Scope::openid() -> Scope {
+  Scope::new("openid")
+}
+
+///|
+/// OIDC standard scope: profile
+pub fn Scope::profile() -> Scope {
+  Scope::new("profile")
+}
+
+///|
+/// OIDC standard scope: email
+pub fn Scope::email() -> Scope {
+  Scope::new("email")
+}
+
+///|
+/// OIDC standard scope: address
+pub fn Scope::address() -> Scope {
+  Scope::new("address")
+}
+
+///|
+/// OIDC standard scope: phone
+pub fn Scope::phone() -> Scope {
+  Scope::new("phone")
+}
+
 ///| Tokens
 
 ///|
@@ -172,6 +202,26 @@ pub fn CsrfToken::to_string(self : CsrfToken) -> String {
   self.value
 }
 
+///| Nonce (OIDC)
+
+///|
+/// Nonce represents the nonce parameter for OIDC replay attack protection
+struct Nonce {
+  value : String
+} derive(Show, Eq)
+
+///|
+/// Create a new Nonce
+pub fn Nonce::new(value : String) -> Nonce {
+  { value, }
+}
+
+///|
+/// Get the string value of Nonce
+pub fn Nonce::to_string(self : Nonce) -> String {
+  self.value
+}
+
 ///| Token Response
 
 ///|
@@ -182,6 +232,7 @@ pub struct TokenResponse {
   expires_in : Int?
   refresh_token : RefreshToken?
   scope : String?
+  id_token : String? // OIDC: ID Token (JWT string)
 } derive(Show)
 
 ///|
@@ -192,8 +243,9 @@ pub fn TokenResponse::new(
   expires_in : Int?,
   refresh_token : RefreshToken?,
   scope : String?,
+  id_token : String?,
 ) -> TokenResponse {
-  { access_token, token_type, expires_in, refresh_token, scope }
+  { access_token, token_type, expires_in, refresh_token, scope, id_token }
 }
 
 ///|
@@ -224,4 +276,10 @@ pub fn TokenResponse::refresh_token(self : TokenResponse) -> RefreshToken? {
 /// Get the scope if present
 pub fn TokenResponse::scope(self : TokenResponse) -> String? {
   self.scope
+}
+
+///|
+/// Get the ID Token if present (OIDC)
+pub fn TokenResponse::id_token(self : TokenResponse) -> String? {
+  self.id_token
 }

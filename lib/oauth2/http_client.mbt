@@ -3,14 +3,19 @@
 ///|
 /// OAuth2HttpClient provides HTTP functionality for OAuth2 operations
 pub struct OAuth2HttpClient {
-  // Placeholder for future client configuration
-  _dummy : Unit
+  debug : Bool // Debug output flag (default: false)
 }
 
 ///|
-/// Create a new OAuth2HttpClient
+/// Create a new OAuth2HttpClient with debug output disabled (default)
 pub fn OAuth2HttpClient::new() -> OAuth2HttpClient {
-  { _dummy: () }
+  { debug: false }
+}
+
+///|
+/// Create a new OAuth2HttpClient with configurable debug output
+pub fn OAuth2HttpClient::new_with_debug(debug : Bool) -> OAuth2HttpClient {
+  { debug, }
 }
 
 ///|
@@ -83,9 +88,12 @@ pub fn build_basic_auth_header(
 }
 
 ///|
-/// Base64 encode a string
+/// Base64 encode a string using moonbitlang/x/codec/base64
+/// Standard encoding with padding
 fn base64_encode(s : String) -> String {
-  base64_encode_internal(s, false, true)
+  // Convert String to BytesView for library
+  let bytes = string_to_bytes_view(s)
+  @base64.encode(bytes, url_safe=false)
 }
 
 ///|
@@ -93,52 +101,32 @@ fn base64_encode(s : String) -> String {
 /// Uses URL-safe alphabet: replaces + with - and / with _
 /// Removes padding (=) characters
 pub fn base64url_encode(s : String) -> String {
-  base64_encode_internal(s, true, false)
+  // Convert String to BytesView for library
+  let bytes = string_to_bytes_view(s)
+  // Encode with URL-safe alphabet and padding
+  let encoded = @base64.encode(bytes, url_safe=true)
+  // Remove padding characters for RFC 4648 Section 5 compliance
+  let mut end = encoded.length()
+  while end > 0 && encoded[end - 1] == '=' {
+    end = end - 1
+  }
+  // Build result without padding
+  let result = StringBuilder::new()
+  for i = 0; i < end; i = i + 1 {
+    result.write_char(encoded[i].unsafe_to_char())
+  }
+  result.to_string()
 }
 
 ///|
-/// Internal Base64 encoding with options for standard vs URL-safe encoding
-fn base64_encode_internal(
-  s : String,
-  use_url_safe : Bool,
-  add_padding : Bool,
-) -> String {
-  let base64_chars = if use_url_safe {
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  } else {
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+/// Convert String to BytesView for base64 encoding
+fn string_to_bytes_view(s : String) -> BytesView {
+  let fixed_array = FixedArray::make(s.length(), Byte::default())
+  for i = 0; i < s.length(); i = i + 1 {
+    fixed_array[i] = s[i].to_int().to_byte()
   }
-  let result = StringBuilder::new()
-  let mut i = 0
-  while i < s.length() {
-    let b1 = s[i].to_int()
-    let b2 = if i + 1 < s.length() { s[i + 1].to_int() } else { 0 }
-    let b3 = if i + 2 < s.length() { s[i + 2].to_int() } else { 0 }
-
-    // Convert 3 bytes to 4 base64 characters
-    let c1 = b1 >> 2
-    let c2 = ((b1 & 0x03) << 4) | (b2 >> 4)
-    let c3 = ((b2 & 0x0F) << 2) | (b3 >> 6)
-    let c4 = b3 & 0x3F
-
-    result.write_char(base64_chars[c1].unsafe_to_char())
-    result.write_char(base64_chars[c2].unsafe_to_char())
-
-    if i + 1 < s.length() {
-      result.write_char(base64_chars[c3].unsafe_to_char())
-    } else if add_padding {
-      result.write_char('=')
-    }
-
-    if i + 2 < s.length() {
-      result.write_char(base64_chars[c4].unsafe_to_char())
-    } else if add_padding {
-      result.write_char('=')
-    }
-
-    i = i + 3
-  }
-  result.to_string()
+  let bytes = Bytes::from_array(fixed_array[:])
+  bytes.op_as_view()
 }
 
 ///|
@@ -156,68 +144,24 @@ pub fn parse_oauth2_error(body : String) -> OAuth2Error {
 }
 
 ///|
-/// Extract string value from JSON-like text
-/// Simple implementation for OAuth2 error responses
+/// Extract string value from JSON using @json package
 fn extract_json_string_value(json : String, key : String) -> String? {
-  // Look for "key":"value" or "key": "value"
-  let search_pattern = "\"\{key}\""
-  let mut start_index = -1
+  let parsed = @json.parse(json) catch { _ => return None }
 
-  // Find the key
-  for i = 0; i < json.length() - key.length() - 2; i = i + 1 {
-    let mut matches = true
-    for j = 0; j < search_pattern.length(); j = j + 1 {
-      if json[i + j].to_int() != search_pattern[j].to_int() {
-        matches = false
-        break
+  match parsed {
+    Object(map) =>
+      match map.get(key) {
+        Some(String(s)) => Some(s)
+        _ => None
       }
-    }
-    if matches {
-      start_index = i + search_pattern.length()
-      break
-    }
+    _ => None
   }
-
-  if start_index == -1 {
-    return None
-  }
-
-  // Skip whitespace and colon
-  while start_index < json.length() &&
-        (json[start_index].to_int() == 32 || json[start_index].to_int() == 58) {
-    start_index = start_index + 1
-  }
-
-  // Skip whitespace after colon
-  while start_index < json.length() && json[start_index].to_int() == 32 {
-    start_index = start_index + 1
-  }
-
-  // Expect opening quote
-  if start_index >= json.length() || json[start_index].to_int() != 34 {
-    return None
-  }
-  start_index = start_index + 1
-
-  // Find closing quote
-  let mut end_index = start_index
-  while end_index < json.length() && json[end_index].to_int() != 34 {
-    end_index = end_index + 1
-  }
-
-  if end_index >= json.length() {
-    return None
-  }
-
-  // Extract the value
-  let value = json[start_index:end_index].to_string() catch { _ => return None }
-  Some(value)
 }
 
 ///|
 /// Send HTTP POST request using mizchi/x
 pub async fn OAuth2HttpClient::post(
-  _self : OAuth2HttpClient,
+  self : OAuth2HttpClient,
   url : String,
   headers : HttpHeaders,
   body : String,
@@ -226,17 +170,21 @@ pub async fn OAuth2HttpClient::post(
   let http_headers = convert_headers(headers)
 
   // Debug: print request details
-  println("DEBUG http_client POST:")
-  println("  URL: \{url}")
-  println("  Body length: \{body.length()}")
+  if self.debug {
+    println("DEBUG http_client POST:")
+    println("  URL: \{url}")
+    println("  Body length: \{body.length()}")
+  }
 
   // Send POST request using mizchi/x
   let (response, response_body) = @http.post(url, body, headers=http_headers) catch {
     err => return Err(HttpError("HTTP request failed: \{err}"))
   }
 
-  println("DEBUG after @http.post:")
-  println("  Response code: \{response.code}")
+  if self.debug {
+    println("DEBUG after @http.post:")
+    println("  Response code: \{response.code}")
+  }
 
   // Convert response to our HttpResponse type
   let response_headers : HttpHeaders = {}
@@ -246,16 +194,74 @@ pub async fn OAuth2HttpClient::post(
   let body_text = response_body.text()
 
   // Debug: print response details
-  println("DEBUG http_client response:")
-  println("  Status: \{response.code}")
-  println("  Body length: \{body_text.length()}")
-  if body_text.length() > 0 {
-    let preview_len = if body_text.length() < 100 {
-      body_text.length()
-    } else {
-      100
+  if self.debug {
+    println("DEBUG http_client response:")
+    println("  Status: \{response.code}")
+    println("  Body length: \{body_text.length()}")
+    if body_text.length() > 0 {
+      let preview_len = if body_text.length() < 100 {
+        body_text.length()
+      } else {
+        100
+      }
+      println(
+        "  Body (first 100 chars): \{body_text[0:preview_len].to_string()}",
+      )
     }
-    println("  Body (first 100 chars): \{body_text[0:preview_len].to_string()}")
+  }
+
+  Ok(HttpResponse::new(response.code, response_headers, body_text))
+}
+
+///|
+/// Send HTTP GET request
+/// Used for OIDC UserInfo Endpoint and other GET requests
+pub async fn OAuth2HttpClient::get(
+  self : OAuth2HttpClient,
+  url : String,
+  headers : HttpHeaders,
+) -> Result[HttpResponse, OAuth2Error] {
+  // Convert headers to mizchi/x format
+  let http_headers = convert_headers(headers)
+
+  // Debug: print request details
+  if self.debug {
+    println("DEBUG http_client GET:")
+    println("  URL: \{url}")
+  }
+
+  // Send GET request using mizchi/x
+  let (response, response_body) = @http.get(url, headers=http_headers) catch {
+    err => return Err(HttpError("HTTP request failed: \{err}"))
+  }
+
+  if self.debug {
+    println("DEBUG after @http.get:")
+    println("  Response code: \{response.code}")
+  }
+
+  // Convert response to our HttpResponse type
+  let response_headers : HttpHeaders = {}
+  response.headers.each(fn(key, value) { response_headers[key] = value })
+
+  // Read body text
+  let body_text = response_body.text()
+
+  // Debug: print response details
+  if self.debug {
+    println("DEBUG http_client response:")
+    println("  Status: \{response.code}")
+    println("  Body length: \{body_text.length()}")
+    if body_text.length() > 0 {
+      let preview_len = if body_text.length() < 100 {
+        body_text.length()
+      } else {
+        100
+      }
+      println(
+        "  Body (first 100 chars): \{body_text[0:preview_len].to_string()}",
+      )
+    }
   }
 
   Ok(HttpResponse::new(response.code, response_headers, body_text))

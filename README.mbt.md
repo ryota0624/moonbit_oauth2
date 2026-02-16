@@ -31,12 +31,6 @@ Add to your `moon.mod.json`:
 }
 ```
 
-Then run:
-
-```bash
-moon install
-```
-
 ## Quick Start
 
 ### Client Credentials Flow
@@ -121,13 +115,24 @@ moon test
 
 ### Integration Tests with Keycloak
 
+#### OAuth2 Tests
+
 ```bash
 # Start Keycloak and setup test environment
 ./scripts/setup_keycloak.sh
 
-# Run integration tests
+# Run OAuth2 integration tests
 ./scripts/test_keycloak_moonbit.sh
 ```
+
+#### OIDC Verification Tests
+
+```bash
+# Run OIDC verification tests
+./scripts/verify_oidc.sh
+```
+
+See [OIDC Verification Guide](docs/verification/oidc_verification_guide.md) for detailed instructions.
 
 ## CI/CD
 

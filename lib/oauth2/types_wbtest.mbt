@@ -64,6 +64,7 @@ test "TokenResponse with all fields" {
     Some(3600),
     Some(refresh_token),
     Some("read write"),
+    None, // id_token
   )
 
   assert_eq(response.access_token().to_string(), "test_access_token")
@@ -79,7 +80,14 @@ test "TokenResponse with all fields" {
 ///|
 test "TokenResponse with minimal fields" {
   let access_token = AccessToken::new("test_access_token")
-  let response = TokenResponse::new(access_token, "Bearer", None, None, None)
+  let response = TokenResponse::new(
+    access_token,
+    "Bearer",
+    None,
+    None,
+    None,
+    None,
+  )
 
   assert_eq(response.access_token().to_string(), "test_access_token")
   assert_eq(response.token_type(), "Bearer")

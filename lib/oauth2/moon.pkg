@@ -1,5 +1,8 @@
 import {
   "mizchi/x/http",
   "moonbitlang/core/random",
+  "moonbitlang/core/json",
   "moonbitlang/async/io",
+  "moonbitlang/x/crypto",
+  "moonbitlang/x/codec/base64",
 }

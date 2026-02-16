@@ -149,20 +149,6 @@ test "extract_json_int_value invalid" {
 }
 
 ///|
-test "parse_int_simple valid" {
-  assert_eq(parse_int_simple("123"), Some(123))
-  assert_eq(parse_int_simple("0"), Some(0))
-  assert_eq(parse_int_simple("9999"), Some(9999))
-}
-
-///|
-test "parse_int_simple invalid" {
-  assert_eq(parse_int_simple("abc"), None)
-  assert_eq(parse_int_simple("12a3"), None)
-  assert_eq(parse_int_simple(""), None)
-}
-
-///|
 test "TokenRequest with PKCE" {
   let token_url = TokenUrl::new("https://auth.example.com/token")
   let client_id = ClientId::new("client")

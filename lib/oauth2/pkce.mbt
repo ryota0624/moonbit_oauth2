@@ -66,28 +66,29 @@ pub fn PkceCodeVerifier::to_string(self : PkceCodeVerifier) -> String {
 pub fn PkceCodeChallenge::from_verifier_s256(
   verifier : PkceCodeVerifier,
 ) -> PkceCodeChallenge {
-  // Compute SHA256 hash of code_verifier
-  let hash_words = sha256(verifier.value)
+  // Compute SHA256 hash of code_verifier using moonbitlang/x/crypto
+  let hasher = @crypto.SHA256::new()
 
-  // Convert hash words (8 x 32-bit) to bytes (32 x 8-bit)
-  let hash_bytes = StringBuilder::new()
-  for i = 0; i < hash_words.length(); i = i + 1 {
-    let word = hash_words[i]
-    // Extract 4 bytes from each 32-bit word and convert to Char
-    hash_bytes.write_char(
-      ((word >> 24) & 0xFF).reinterpret_as_int().unsafe_to_char(),
-    )
-    hash_bytes.write_char(
-      ((word >> 16) & 0xFF).reinterpret_as_int().unsafe_to_char(),
-    )
-    hash_bytes.write_char(
-      ((word >> 8) & 0xFF).reinterpret_as_int().unsafe_to_char(),
-    )
-    hash_bytes.write_char((word & 0xFF).reinterpret_as_int().unsafe_to_char())
+  // Convert String to FixedArray[Byte] for ByteSource
+  let verifier_bytes = FixedArray::make(
+    verifier.value.length(),
+    Byte::default(),
+  )
+  for i = 0; i < verifier.value.length(); i = i + 1 {
+    verifier_bytes[i] = verifier.value[i].to_int().to_byte()
+  }
+
+  hasher.update(verifier_bytes)
+  let hash_bytes = hasher.finalize()
+
+  // Convert FixedArray[Byte] to String for base64url encoding
+  let hash_string = StringBuilder::new()
+  for i = 0; i < hash_bytes.length(); i = i + 1 {
+    hash_string.write_char(hash_bytes[i].to_int().unsafe_to_char())
   }
 
   // Base64URL encode the hash
-  let challenge_value = base64url_encode(hash_bytes.to_string())
+  let challenge_value = base64url_encode(hash_string.to_string())
 
   { value: challenge_value, challenge_method: S256 }
 }

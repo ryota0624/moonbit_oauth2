@@ -12,15 +12,13 @@ pub fn build_scope_string(Array[Scope]) -> String
 
 pub fn generate_csrf_token() -> CsrfToken
 
+pub fn generate_nonce() -> Nonce
+
 pub fn int_to_hex(Int) -> String
 
 pub fn parse_oauth2_error(String) -> OAuth2Error
 
 pub fn parse_token_response(String) -> Result[TokenResponse, OAuth2Error]
-
-pub fn sha256(String) -> Array[UInt]
-
-pub fn sha256_hex(String) -> String
 
 pub fn url_encode(String) -> String
 
@@ -47,10 +45,12 @@ pub struct AuthorizationRequest {
   state : CsrfToken
   response_type : String
   pkce_challenge : PkceCodeChallenge?
+  nonce : Nonce?
 }
 pub fn AuthorizationRequest::build_authorization_url(Self) -> String
 pub fn AuthorizationRequest::new(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken) -> Self
 pub fn AuthorizationRequest::new_with_pkce(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken, PkceCodeChallenge) -> Self
+pub fn AuthorizationRequest::with_nonce(Self, Nonce) -> Self
 pub impl Show for AuthorizationRequest
 
 pub struct ClientCredentialsRequest {
@@ -84,7 +84,7 @@ pub fn CsrfToken::to_string(Self) -> String
 pub impl Eq for CsrfToken
 pub impl Show for CsrfToken
 
-pub enum HttpMethod {
+pub(all) enum HttpMethod {
   GET
   POST
   PUT
@@ -113,6 +113,12 @@ pub fn HttpResponse::is_success(Self) -> Bool
 pub fn HttpResponse::new(Int, Map[String, String], String) -> Self
 pub impl Show for HttpResponse
 
+type Nonce
+pub fn Nonce::new(String) -> Self
+pub fn Nonce::to_string(Self) -> String
+pub impl Eq for Nonce
+pub impl Show for Nonce
+
 pub enum OAuth2Error {
   InvalidRequest(String)
   InvalidClient(String)
@@ -130,13 +136,18 @@ pub enum OAuth2Error {
 }
 pub fn OAuth2Error::from_error_code(String, String?) -> Self
 pub fn OAuth2Error::message(Self) -> String
+pub fn OAuth2Error::new_http_error(String) -> Self
+pub fn OAuth2Error::new_other(String) -> Self
+pub fn OAuth2Error::new_parse_error(String) -> Self
 pub impl Eq for OAuth2Error
 pub impl Show for OAuth2Error
 
 pub struct OAuth2HttpClient {
-  _dummy : Unit
+  debug : Bool
 }
+pub async fn OAuth2HttpClient::get(Self, String, Map[String, String]) -> Result[HttpResponse, OAuth2Error]
 pub fn OAuth2HttpClient::new() -> Self
+pub fn OAuth2HttpClient::new_with_debug(Bool) -> Self
 pub async fn OAuth2HttpClient::post(Self, String, Map[String, String], String) -> Result[HttpResponse, OAuth2Error]
 
 pub struct PasswordRequest {
@@ -156,7 +167,7 @@ pub impl Show for PasswordRequest
 
 pub struct PkceCodeChallenge {
   value : String
-  method : PkceCodeChallengeMethod
+  challenge_method : PkceCodeChallengeMethod
 }
 pub fn PkceCodeChallenge::from_verifier_plain(PkceCodeVerifier) -> Self
 pub fn PkceCodeChallenge::from_verifier_s256(PkceCodeVerifier) -> Self
@@ -194,7 +205,12 @@ pub impl Eq for RefreshToken
 pub impl Show for RefreshToken
 
 type Scope
+pub fn Scope::address() -> Self
+pub fn Scope::email() -> Self
 pub fn Scope::new(String) -> Self
+pub fn Scope::openid() -> Self
+pub fn Scope::phone() -> Self
+pub fn Scope::profile() -> Self
 pub fn Scope::to_string(Self) -> String
 pub impl Eq for Scope
 pub impl Show for Scope
@@ -221,10 +237,12 @@ pub struct TokenResponse {
   expires_in : Int?
   refresh_token : RefreshToken?
   scope : String?
+  id_token : String?
 }
 pub fn TokenResponse::access_token(Self) -> AccessToken
 pub fn TokenResponse::expires_in(Self) -> Int?
-pub fn TokenResponse::new(AccessToken, String, Int?, RefreshToken?, String?) -> Self
+pub fn TokenResponse::id_token(Self) -> String?
+pub fn TokenResponse::new(AccessToken, String, Int?, RefreshToken?, String?, String?) -> Self
 pub fn TokenResponse::refresh_token(Self) -> RefreshToken?
 pub fn TokenResponse::scope(Self) -> String?
 pub fn TokenResponse::token_type(Self) -> String

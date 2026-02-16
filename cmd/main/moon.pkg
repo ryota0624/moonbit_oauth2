@@ -1,7 +1,0 @@
-// import {
-//   "ryota0624/oauth2" @lib,
-// }
-
-options(
-  "is-main": true,
-)

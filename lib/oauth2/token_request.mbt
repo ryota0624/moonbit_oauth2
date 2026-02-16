@@ -140,6 +140,7 @@ pub fn parse_token_response(
       let expires_in = extract_json_int_value(json, "expires_in")
       let refresh_token_str = extract_json_string_value(json, "refresh_token")
       let scope = extract_json_string_value(json, "scope")
+      let id_token = extract_json_string_value(json, "id_token")
 
       // Create tokens
       let access_token = AccessToken::new(token)
@@ -149,7 +150,7 @@ pub fn parse_token_response(
       }
 
       let response = TokenResponse::new(
-        access_token, type_, expires_in, refresh_token, scope,
+        access_token, type_, expires_in, refresh_token, scope, id_token,
       )
       Ok(response)
     }
@@ -160,81 +161,14 @@ pub fn parse_token_response(
 ///|
 /// Extract integer value from JSON-like text
 fn extract_json_int_value(json : String, key : String) -> Int? {
-  // Look for "key":123 or "key": 123
-  let search_pattern = "\"\{key}\""
-  let mut start_index = -1
+  let parsed = @json.parse(json) catch { _ => return None }
 
-  // Find the key
-  for i = 0; i < json.length() - key.length() - 2; i = i + 1 {
-    let mut matches = true
-    for j = 0; j < search_pattern.length(); j = j + 1 {
-      if json[i + j].to_int() != search_pattern[j].to_int() {
-        matches = false
-        break
+  match parsed {
+    Object(map) =>
+      match map.get(key) {
+        Some(Number(n, ..)) => Some(n.to_int())
+        _ => None
       }
-    }
-    if matches {
-      start_index = i + search_pattern.length()
-      break
-    }
+    _ => None
   }
-
-  if start_index == -1 {
-    return None
-  }
-
-  // Skip whitespace and colon
-  while start_index < json.length() &&
-        (json[start_index].to_int() == 32 || json[start_index].to_int() == 58) {
-    start_index = start_index + 1
-  }
-
-  // Skip whitespace after colon
-  while start_index < json.length() && json[start_index].to_int() == 32 {
-    start_index = start_index + 1
-  }
-
-  // Read digits
-  let mut end_index = start_index
-  while end_index < json.length() {
-    let ch = json[end_index].to_int()
-    if ch >= 48 && ch <= 57 {
-      // 0-9
-      end_index = end_index + 1
-    } else {
-      break
-    }
-  }
-
-  if end_index == start_index {
-    return None
-  }
-
-  // Parse the number manually
-  let num_str = json[start_index:end_index].to_string() catch {
-    _ => return None
-  }
-  let num = parse_int_simple(num_str)
-  num
-}
-
-///|
-/// Simple integer parser for JSON values
-fn parse_int_simple(s : String) -> Int? {
-  if s.length() == 0 {
-    return None
-  }
-
-  let mut result = 0
-  for i = 0; i < s.length(); i = i + 1 {
-    let ch = s[i].to_int()
-    if ch >= 48 && ch <= 57 {
-      // 0-9
-      let digit = ch - 48
-      result = result * 10 + digit
-    } else {
-      return None
-    }
-  }
-  Some(result)
 }
