@@ -1,5 +1,5 @@
 import {
-  "ryota0624/oauth2/oauth2",
+  "ryota0624/oauth2",
   "ryota0624/oauth2/oidc",
   "mizchi/x/http",
   "mizchi/x/sys",

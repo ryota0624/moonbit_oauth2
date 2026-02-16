@@ -1,0 +1,16 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ryota0624/oauth2/keycloak_test"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Config
+
+type OidcConfig
+
+// Type aliases
+
+// Traits
+
