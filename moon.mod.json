@@ -7,10 +7,19 @@
     "moonbitlang/x": "0.4.40"
   },
   "readme": "README.mbt.md",
-  "repository": "",
+  "repository": "https://github.com/ryota0624/oauth2",
   "license": "Apache-2.0",
-  "keywords": [],
-  "description": "",
+  "keywords": [
+    "oauth2",
+    "oidc",
+    "openid-connect",
+    "authentication",
+    "authorization",
+    "pkce",
+    "jwt",
+    "id-token"
+  ],
+  "description": "OAuth2 and OpenID Connect (OIDC) client library for MoonBit with support for Authorization Code Flow, Client Credentials, Password Grant, and PKCE",
   "source": "lib",
   "preferred-target": "native"
 }
