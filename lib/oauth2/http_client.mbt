@@ -3,14 +3,19 @@
 ///|
 /// OAuth2HttpClient provides HTTP functionality for OAuth2 operations
 pub struct OAuth2HttpClient {
-  // Placeholder for future client configuration
-  _dummy : Unit
+  debug : Bool // Debug output flag (default: false)
 }
 
 ///|
-/// Create a new OAuth2HttpClient
+/// Create a new OAuth2HttpClient with debug output disabled (default)
 pub fn OAuth2HttpClient::new() -> OAuth2HttpClient {
-  { _dummy: () }
+  { debug: false }
+}
+
+///|
+/// Create a new OAuth2HttpClient with configurable debug output
+pub fn OAuth2HttpClient::new_with_debug(debug : Bool) -> OAuth2HttpClient {
+  { debug, }
 }
 
 ///|
@@ -217,7 +222,7 @@ fn extract_json_string_value(json : String, key : String) -> String? {
 ///|
 /// Send HTTP POST request using mizchi/x
 pub async fn OAuth2HttpClient::post(
-  _self : OAuth2HttpClient,
+  self : OAuth2HttpClient,
   url : String,
   headers : HttpHeaders,
   body : String,
@@ -226,17 +231,21 @@ pub async fn OAuth2HttpClient::post(
   let http_headers = convert_headers(headers)
 
   // Debug: print request details
-  println("DEBUG http_client POST:")
-  println("  URL: \{url}")
-  println("  Body length: \{body.length()}")
+  if self.debug {
+    println("DEBUG http_client POST:")
+    println("  URL: \{url}")
+    println("  Body length: \{body.length()}")
+  }
 
   // Send POST request using mizchi/x
   let (response, response_body) = @http.post(url, body, headers=http_headers) catch {
     err => return Err(HttpError("HTTP request failed: \{err}"))
   }
 
-  println("DEBUG after @http.post:")
-  println("  Response code: \{response.code}")
+  if self.debug {
+    println("DEBUG after @http.post:")
+    println("  Response code: \{response.code}")
+  }
 
   // Convert response to our HttpResponse type
   let response_headers : HttpHeaders = {}
@@ -246,16 +255,20 @@ pub async fn OAuth2HttpClient::post(
   let body_text = response_body.text()
 
   // Debug: print response details
-  println("DEBUG http_client response:")
-  println("  Status: \{response.code}")
-  println("  Body length: \{body_text.length()}")
-  if body_text.length() > 0 {
-    let preview_len = if body_text.length() < 100 {
-      body_text.length()
-    } else {
-      100
+  if self.debug {
+    println("DEBUG http_client response:")
+    println("  Status: \{response.code}")
+    println("  Body length: \{body_text.length()}")
+    if body_text.length() > 0 {
+      let preview_len = if body_text.length() < 100 {
+        body_text.length()
+      } else {
+        100
+      }
+      println(
+        "  Body (first 100 chars): \{body_text[0:preview_len].to_string()}",
+      )
     }
-    println("  Body (first 100 chars): \{body_text[0:preview_len].to_string()}")
   }
 
   Ok(HttpResponse::new(response.code, response_headers, body_text))
@@ -265,7 +278,7 @@ pub async fn OAuth2HttpClient::post(
 /// Send HTTP GET request
 /// Used for OIDC UserInfo Endpoint and other GET requests
 pub async fn OAuth2HttpClient::get(
-  _self : OAuth2HttpClient,
+  self : OAuth2HttpClient,
   url : String,
   headers : HttpHeaders,
 ) -> Result[HttpResponse, OAuth2Error] {
@@ -273,16 +286,20 @@ pub async fn OAuth2HttpClient::get(
   let http_headers = convert_headers(headers)
 
   // Debug: print request details
-  println("DEBUG http_client GET:")
-  println("  URL: \{url}")
+  if self.debug {
+    println("DEBUG http_client GET:")
+    println("  URL: \{url}")
+  }
 
   // Send GET request using mizchi/x
   let (response, response_body) = @http.get(url, headers=http_headers) catch {
     err => return Err(HttpError("HTTP request failed: \{err}"))
   }
 
-  println("DEBUG after @http.get:")
-  println("  Response code: \{response.code}")
+  if self.debug {
+    println("DEBUG after @http.get:")
+    println("  Response code: \{response.code}")
+  }
 
   // Convert response to our HttpResponse type
   let response_headers : HttpHeaders = {}
@@ -292,16 +309,20 @@ pub async fn OAuth2HttpClient::get(
   let body_text = response_body.text()
 
   // Debug: print response details
-  println("DEBUG http_client response:")
-  println("  Status: \{response.code}")
-  println("  Body length: \{body_text.length()}")
-  if body_text.length() > 0 {
-    let preview_len = if body_text.length() < 100 {
-      body_text.length()
-    } else {
-      100
+  if self.debug {
+    println("DEBUG http_client response:")
+    println("  Status: \{response.code}")
+    println("  Body length: \{body_text.length()}")
+    if body_text.length() > 0 {
+      let preview_len = if body_text.length() < 100 {
+        body_text.length()
+      } else {
+        100
+      }
+      println(
+        "  Body (first 100 chars): \{body_text[0:preview_len].to_string()}",
+      )
     }
-    println("  Body (first 100 chars): \{body_text[0:preview_len].to_string()}")
   }
 
   Ok(HttpResponse::new(response.code, response_headers, body_text))

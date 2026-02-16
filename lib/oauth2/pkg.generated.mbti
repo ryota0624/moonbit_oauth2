@@ -147,10 +147,11 @@ pub impl Eq for OAuth2Error
 pub impl Show for OAuth2Error
 
 pub struct OAuth2HttpClient {
-  _dummy : Unit
+  debug : Bool
 }
 pub async fn OAuth2HttpClient::get(Self, String, Map[String, String]) -> Result[HttpResponse, OAuth2Error]
 pub fn OAuth2HttpClient::new() -> Self
+pub fn OAuth2HttpClient::new_with_debug(Bool) -> Self
 pub async fn OAuth2HttpClient::post(Self, String, Map[String, String], String) -> Result[HttpResponse, OAuth2Error]
 
 pub struct PasswordRequest {
