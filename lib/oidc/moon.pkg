@@ -1,7 +1,6 @@
 import {
   "ryota0624/oauth2/oauth2",
   "moonbitlang/x/codec/base64",
-  "moonbitlang/x/crypto",
   "moonbitlang/x/encoding",
   "moonbitlang/core/json",
 }
