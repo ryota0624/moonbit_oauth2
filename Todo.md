@@ -126,6 +126,8 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
   - [x] 全124テスト成功確認
   - 実施工数: 30分
  - [ ] jsonからの値の取り出しはjsonパッケージを使う様にする
+  - [ ] extract_json_int_value
+  - [ ] extract_json_string_value
  - [x] sha256の実装はcryptoパッケージを使う様にする ✅ **完了**
    - [x] moonbitlang/x/crypto依存関係を追加
    - [x] pkce.mbtでライブラリ実装を使用
@@ -133,7 +135,14 @@ Native/JSで動くauth2のクライアントライブラリを実装する。
    - [x] sha256_wbtest.mbt削除（11テスト）
    - [x] 全113テスト成功確認
    - 実施工数: 30分
- - [ ] Base64URLエンコードの実装はcodec/base64パッケージを使う様にする
+ - [x] Base64URLエンコードの実装はcodec/base64パッケージを使う様にする ✅ **完了**
+   - [x] moonbitlang/x/codec/base64依存関係を追加
+   - [x] base64_encode()をライブラリ実装で置き換え
+   - [x] base64url_encode()をライブラリ実装で置き換え
+   - [x] base64_encode_internal()削除（57行）
+   - [x] 全113テスト成功確認（Native/JS両方）
+   - [x] 公開API変更なし
+   - 実施工数: 40分
  - [ ] ネストしたパターンマッチをguard節に置き換える
 
 ## HTTPクライアント機能拡張（中優先度）

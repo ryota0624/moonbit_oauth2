@@ -88,9 +88,12 @@ pub fn build_basic_auth_header(
 }
 
 ///|
-/// Base64 encode a string
+/// Base64 encode a string using moonbitlang/x/codec/base64
+/// Standard encoding with padding
 fn base64_encode(s : String) -> String {
-  base64_encode_internal(s, false, true)
+  // Convert String to BytesView for library
+  let bytes = string_to_bytes_view(s)
+  @base64.encode(bytes, url_safe=false)
 }
 
 ///|
@@ -98,52 +101,32 @@ fn base64_encode(s : String) -> String {
 /// Uses URL-safe alphabet: replaces + with - and / with _
 /// Removes padding (=) characters
 pub fn base64url_encode(s : String) -> String {
-  base64_encode_internal(s, true, false)
+  // Convert String to BytesView for library
+  let bytes = string_to_bytes_view(s)
+  // Encode with URL-safe alphabet and padding
+  let encoded = @base64.encode(bytes, url_safe=true)
+  // Remove padding characters for RFC 4648 Section 5 compliance
+  let mut end = encoded.length()
+  while end > 0 && encoded[end - 1] == '=' {
+    end = end - 1
+  }
+  // Build result without padding
+  let result = StringBuilder::new()
+  for i = 0; i < end; i = i + 1 {
+    result.write_char(encoded[i].unsafe_to_char())
+  }
+  result.to_string()
 }
 
 ///|
-/// Internal Base64 encoding with options for standard vs URL-safe encoding
-fn base64_encode_internal(
-  s : String,
-  use_url_safe : Bool,
-  add_padding : Bool,
-) -> String {
-  let base64_chars = if use_url_safe {
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  } else {
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+/// Convert String to BytesView for base64 encoding
+fn string_to_bytes_view(s : String) -> BytesView {
+  let fixed_array = FixedArray::make(s.length(), Byte::default())
+  for i = 0; i < s.length(); i = i + 1 {
+    fixed_array[i] = s[i].to_int().to_byte()
   }
-  let result = StringBuilder::new()
-  let mut i = 0
-  while i < s.length() {
-    let b1 = s[i].to_int()
-    let b2 = if i + 1 < s.length() { s[i + 1].to_int() } else { 0 }
-    let b3 = if i + 2 < s.length() { s[i + 2].to_int() } else { 0 }
-
-    // Convert 3 bytes to 4 base64 characters
-    let c1 = b1 >> 2
-    let c2 = ((b1 & 0x03) << 4) | (b2 >> 4)
-    let c3 = ((b2 & 0x0F) << 2) | (b3 >> 6)
-    let c4 = b3 & 0x3F
-
-    result.write_char(base64_chars[c1].unsafe_to_char())
-    result.write_char(base64_chars[c2].unsafe_to_char())
-
-    if i + 1 < s.length() {
-      result.write_char(base64_chars[c3].unsafe_to_char())
-    } else if add_padding {
-      result.write_char('=')
-    }
-
-    if i + 2 < s.length() {
-      result.write_char(base64_chars[c4].unsafe_to_char())
-    } else if add_padding {
-      result.write_char('=')
-    }
-
-    i = i + 3
-  }
-  result.to_string()
+  let bytes = Bytes::from_array(fixed_array[:])
+  bytes.op_as_view()
 }
 
 ///|
