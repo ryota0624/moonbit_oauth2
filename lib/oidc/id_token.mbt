@@ -47,34 +47,32 @@ pub fn IdToken::parse(
   token_string : String,
 ) -> Result[IdToken, @oauth2.OAuth2Error] {
   // Split JWT into three parts: header.payload.signature
-  match split_jwt(token_string) {
-    Err(e) => Err(e)
-    Ok((header_b64, payload_b64, signature_b64)) =>
-      // Decode Base64URL
-      match base64url_decode(header_b64) {
-        Err(e) => Err(e)
-        Ok(header_json) =>
-          match base64url_decode(payload_b64) {
-            Err(e) => Err(e)
-            Ok(payload_json) =>
-              // Parse JSON
-              match parse_jwt_header(header_json) {
-                Err(e) => Err(e)
-                Ok(header) =>
-                  match parse_claims(payload_json) {
-                    Err(e) => Err(e)
-                    Ok(claims) =>
-                      Ok({
-                        raw: token_string,
-                        header,
-                        payload: claims,
-                        signature: signature_b64,
-                      })
-                  }
-              }
-          }
-      }
+  let (header_b64, payload_b64, signature_b64) = match split_jwt(token_string) {
+    Ok(parts) => parts
+    Err(e) => return Err(e)
   }
+
+  // Decode Base64URL
+  let header_json = match base64url_decode(header_b64) {
+    Ok(json) => json
+    Err(e) => return Err(e)
+  }
+  let payload_json = match base64url_decode(payload_b64) {
+    Ok(json) => json
+    Err(e) => return Err(e)
+  }
+
+  // Parse JSON
+  let header = match parse_jwt_header(header_json) {
+    Ok(h) => h
+    Err(e) => return Err(e)
+  }
+  let claims = match parse_claims(payload_json) {
+    Ok(c) => c
+    Err(e) => return Err(e)
+  }
+
+  Ok({ raw: token_string, header, payload: claims, signature: signature_b64 })
 }
 
 ///|
@@ -146,34 +144,21 @@ fn parse_jwt_header(
   }
 
   let alg = match obj.get("alg") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => s
-        _ =>
-          return Err(
-            @oauth2.OAuth2Error::new_other("Invalid 'alg' in JWT header"),
-          )
-      }
+    Some(String(s)) => s
+    Some(_) =>
+      return Err(@oauth2.OAuth2Error::new_other("Invalid 'alg' in JWT header"))
     None =>
       return Err(@oauth2.OAuth2Error::new_other("Missing 'alg' in JWT header"))
   }
 
   let typ = match obj.get("typ") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => s
-        _ => "JWT"
-      }
-    None => "JWT" // Default to "JWT" if not present
+    Some(String(s)) => s
+    _ => "JWT" // Default to "JWT" if not present or invalid
   }
 
   let kid = match obj.get("kid") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None // None if missing or invalid type
   }
 
   Ok({ alg, typ, kid })
@@ -199,144 +184,90 @@ fn parse_claims(
 
   // Required claims
   let iss = match obj.get("iss") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => s
-        _ => return Err(@oauth2.OAuth2Error::new_other("Invalid 'iss' claim"))
-      }
+    Some(String(s)) => s
+    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'iss' claim"))
     None => return Err(@oauth2.OAuth2Error::new_other("Missing 'iss' claim"))
   }
 
   let sub = match obj.get("sub") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => s
-        _ => return Err(@oauth2.OAuth2Error::new_other("Invalid 'sub' claim"))
-      }
+    Some(String(s)) => s
+    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'sub' claim"))
     None => return Err(@oauth2.OAuth2Error::new_other("Missing 'sub' claim"))
   }
 
   let aud = match obj.get("aud") {
-    Some(json_val) =>
-      match json_val {
+    Some(String(s)) => s
+    Some(Array(arr)) if arr.length() == 0 =>
+      return Err(@oauth2.OAuth2Error::new_other("Empty 'aud' array"))
+    Some(Array(arr)) =>
+      match arr[0] {
         String(s) => s
-        Array(arr) => {
-          // Audience can be an array, take the first one
-          if arr.length() == 0 {
-            return Err(@oauth2.OAuth2Error::new_other("Empty 'aud' array"))
-          }
-          match arr[0] {
-            String(s) => s
-            _ =>
-              return Err(
-                @oauth2.OAuth2Error::new_other("Invalid 'aud' claim in array"),
-              )
-          }
-        }
-        _ => return Err(@oauth2.OAuth2Error::new_other("Invalid 'aud' claim"))
+        _ =>
+          return Err(
+            @oauth2.OAuth2Error::new_other("Invalid 'aud' claim in array"),
+          )
       }
+    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'aud' claim"))
     None => return Err(@oauth2.OAuth2Error::new_other("Missing 'aud' claim"))
   }
 
   let exp = match obj.get("exp") {
-    Some(json_val) =>
-      match json_val {
-        Number(n, ..) => n.to_int64()
-        _ => return Err(@oauth2.OAuth2Error::new_other("Invalid 'exp' claim"))
-      }
+    Some(Number(n, ..)) => n.to_int64()
+    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'exp' claim"))
     None => return Err(@oauth2.OAuth2Error::new_other("Missing 'exp' claim"))
   }
 
   let iat = match obj.get("iat") {
-    Some(json_val) =>
-      match json_val {
-        Number(n, ..) => n.to_int64()
-        _ => return Err(@oauth2.OAuth2Error::new_other("Invalid 'iat' claim"))
-      }
+    Some(Number(n, ..)) => n.to_int64()
+    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'iat' claim"))
     None => return Err(@oauth2.OAuth2Error::new_other("Missing 'iat' claim"))
   }
 
   // Optional claims
   let auth_time = match obj.get("auth_time") {
-    Some(json_val) =>
-      match json_val {
-        Number(n, ..) => Some(n.to_int64())
-        _ => None
-      }
-    None => None
+    Some(Number(n, ..)) => Some(n.to_int64())
+    _ => None
   }
 
   let nonce = match obj.get("nonce") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None
   }
 
   let name = match obj.get("name") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None
   }
 
   let given_name = match obj.get("given_name") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None
   }
 
   let family_name = match obj.get("family_name") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None
   }
 
   let email = match obj.get("email") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None
   }
 
   let email_verified = match obj.get("email_verified") {
-    Some(json_val) =>
-      match json_val {
-        True => Some(true)
-        False => Some(false)
-        _ => None
-      }
-    None => None
+    Some(True) => Some(true)
+    Some(False) => Some(false)
+    _ => None
   }
 
   let picture = match obj.get("picture") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None
   }
 
   let locale = match obj.get("locale") {
-    Some(json_val) =>
-      match json_val {
-        String(s) => Some(s)
-        _ => None
-      }
-    None => None
+    Some(String(s)) => Some(s)
+    _ => None
   }
 
   Ok({
