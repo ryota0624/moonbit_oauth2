@@ -429,7 +429,7 @@ async fn main {
   // 環境変数 MODE で実行モードを切り替え
   let mode = match @sys.get_env_var("MODE") {
     Some(v) => v
-    None => "oauth2"  // デフォルトは OAuth2 検証
+    None => "oauth2" // デフォルトは OAuth2 検証
   }
 
   if mode == "oidc" {

@@ -67,7 +67,7 @@ fn OidcConfig::from_env() -> OidcConfig {
 fn print_test_result(
   test_name : String,
   success : Bool,
-  message : String
+  message : String,
 ) -> Unit {
   let status = if success { "✓ 成功" } else { "✗ 失敗" }
   let color = if success { "\u{1b}[32m" } else { "\u{1b}[31m" }
@@ -208,7 +208,10 @@ async fn test_id_token_acquisition(config : OidcConfig) -> Unit {
                   println("  email: \{email}")
                   print_test_result("email クレーム", true, "")
                 }
-                None => print_test_result("email クレーム", false, "存在しません")
+                None =>
+                  print_test_result(
+                    "email クレーム", false, "存在しません",
+                  )
               }
 
               match id_token.name() {
@@ -216,7 +219,10 @@ async fn test_id_token_acquisition(config : OidcConfig) -> Unit {
                   println("  name: \{name}")
                   print_test_result("name クレーム", true, "")
                 }
-                None => print_test_result("name クレーム", false, "存在しません")
+                None =>
+                  print_test_result(
+                    "name クレーム", false, "存在しません",
+                  )
               }
 
               match id_token.nonce() {
@@ -224,7 +230,10 @@ async fn test_id_token_acquisition(config : OidcConfig) -> Unit {
                   println("  nonce: \{nonce}")
                   print_test_result("nonce クレーム", true, "")
                 }
-                None => print_test_result("nonce クレーム", false, "存在しません")
+                None =>
+                  print_test_result(
+                    "nonce クレーム", false, "存在しません",
+                  )
               }
             }
             Err(error) =>
@@ -233,9 +242,7 @@ async fn test_id_token_acquisition(config : OidcConfig) -> Unit {
         }
         None =>
           print_test_result(
-            "id_token フィールド存在",
-            false,
-            "TokenResponse に id_token が含まれていません",
+            "id_token フィールド存在", false, "TokenResponse に id_token が含まれていません",
           )
       }
     }
@@ -340,9 +347,7 @@ async fn test_userinfo_endpoint(config : OidcConfig) -> Unit {
             }
             None =>
               print_test_result(
-                "sub 一致（ID Token vs UserInfo）",
-                false,
-                "ID Token が取得できませんでした",
+                "sub 一致（ID Token vs UserInfo）", false, "ID Token が取得できませんでした",
               )
           }
 
@@ -363,7 +368,8 @@ async fn test_userinfo_endpoint(config : OidcConfig) -> Unit {
           print_test_result("UserInfo 取得", false, error.message())
       }
     }
-    Err(error) => print_test_result("Access Token 取得", false, error.message())
+    Err(error) =>
+      print_test_result("Access Token 取得", false, error.message())
   }
 }
 
@@ -460,9 +466,7 @@ async fn test_token_response_helpers(config : OidcConfig) -> Unit {
         }
         Ok(None) =>
           print_test_result(
-            "parse_id_token_from_response",
-            false,
-            "id_token が存在しません",
+            "parse_id_token_from_response", false, "id_token が存在しません",
           )
         Err(error) =>
           print_test_result(
@@ -488,7 +492,8 @@ async fn test_token_response_helpers(config : OidcConfig) -> Unit {
           )
       }
     }
-    Err(error) => print_test_result("トークン取得", false, error.message())
+    Err(error) =>
+      print_test_result("トークン取得", false, error.message())
   }
 }
 
@@ -544,9 +549,7 @@ async fn run_oidc_verification() -> Unit {
   // サマリー
   print_test_separator("テスト完了")
   println("")
-  println(
-    "✓ MoonBit OIDC 実装で Keycloak の動作を検証しました",
-  )
+  println("✓ MoonBit OIDC 実装で Keycloak の動作を検証しました")
   println("")
   println(
     "📖 詳細な手順は docs/verification/oidc_verification_guide.md を参照",
