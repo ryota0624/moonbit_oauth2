@@ -119,8 +119,10 @@ fn base64url_decode(input : String) -> Result[String, @oauth2.OAuth2Error] {
       )
   }
 
-  // Convert bytes to string
-  Ok(bytes.to_string())
+  // Convert bytes to UTF-8 string using encoding library
+  let decoder = @encoding.decoder(@encoding.Encoding::UTF8)
+  let result = decoder.decode_lossy(bytes.op_as_view())
+  Ok(result)
 }
 
 ///|
