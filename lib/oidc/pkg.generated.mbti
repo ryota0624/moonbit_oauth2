@@ -85,6 +85,17 @@ pub struct IdTokenClaims {
 }
 pub impl Show for IdTokenClaims
 
+pub enum JWKError {
+  InvalidJson(String)
+  InvalidStructure(String)
+  InvalidFieldType(String)
+  MissingRequiredField(String)
+  NoValidKeys
+}
+pub fn JWKError::message(Self) -> String
+pub impl Eq for JWKError
+pub impl Show for JWKError
+
 pub struct JsonWebKey {
   kty : String
   use_ : String?

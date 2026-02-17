@@ -26,6 +26,28 @@ pub struct JsonWebKeySet {
 } derive(Show, Eq)
 
 ///|
+/// JWKError represents errors that occur during JWK/JWKS parsing
+pub enum JWKError {
+  InvalidJson(String) // JSON parsing failed
+  InvalidStructure(String) // Structure validation failed (e.g., not an object, missing required fields)
+  InvalidFieldType(String) // Field has wrong type
+  MissingRequiredField(String) // Required field is missing
+  NoValidKeys // No valid JWKs found in JWKS
+} derive(Show, Eq)
+
+///|
+/// Convert JWKError to string message
+pub fn JWKError::message(self : JWKError) -> String {
+  match self {
+    InvalidJson(msg) => "Failed to parse JSON: \{msg}"
+    InvalidStructure(msg) => "Invalid JWKS structure: \{msg}"
+    InvalidFieldType(msg) => "Invalid field type: \{msg}"
+    MissingRequiredField(msg) => "Missing required field: \{msg}"
+    NoValidKeys => "No valid JWKs found in JWKS"
+  }
+}
+
+///|
 /// Fetch JWKS from the specified URI
 ///
 /// Fetches the JSON Web Key Set from the JWKS endpoint.
@@ -71,8 +93,16 @@ pub async fn fetch_jwks(
     )
   }
 
-  // Parse JWKS
-  parse_jwks(response.body)
+  // Parse JWKS and convert JWKError to OAuth2Error
+  match parse_jwks(response.body) {
+    Ok(jwks) => Ok(jwks)
+    Err(jwk_err) =>
+      Err(
+        @oauth2.OAuth2Error::new_other(
+          "JWKS parsing failed: \{jwk_err.message()}",
+        ),
+      )
+  }
 }
 
 ///|
@@ -83,28 +113,23 @@ pub async fn fetch_jwks(
 ///
 /// # Returns
 /// * `Ok(JsonWebKeySet)` - Successfully parsed JWKS
-/// * `Err(OAuth2Error)` - Failed to parse or invalid format
-fn parse_jwks(json_str : String) -> Result[JsonWebKeySet, @oauth2.OAuth2Error] {
+/// * `Err(JWKError)` - Failed to parse or invalid format
+fn parse_jwks(json_str : String) -> Result[JsonWebKeySet, JWKError] {
   // Parse JSON
   let json = @json.parse(json_str) catch {
-    e =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Failed to parse JWKS JSON: \{e}"),
-      )
+    e => return Err(InvalidJson(e.to_string()))
   }
 
   let obj = match json {
     Object(o) => o
-    _ =>
-      return Err(@oauth2.OAuth2Error::new_other("JWKS must be a JSON object"))
+    _ => return Err(InvalidStructure("JWKS must be a JSON object"))
   }
 
   // Extract keys array
   let keys_array = match obj.get("keys") {
     Some(Array(arr)) => arr
-    Some(_) =>
-      return Err(@oauth2.OAuth2Error::new_other("'keys' must be an array"))
-    None => return Err(@oauth2.OAuth2Error::new_other("Missing 'keys' in JWKS"))
+    Some(_) => return Err(InvalidFieldType("'keys' must be an array"))
+    None => return Err(MissingRequiredField("'keys' field is missing in JWKS"))
   }
 
   // Parse each JWK
@@ -174,7 +199,7 @@ fn parse_jwks(json_str : String) -> Result[JsonWebKeySet, @oauth2.OAuth2Error] {
 
   // Check if we got at least one valid key
   if keys.length() == 0 {
-    return Err(@oauth2.OAuth2Error::new_other("No valid JWKs found in JWKS"))
+    return Err(NoValidKeys)
   }
 
   Ok({ keys, })
