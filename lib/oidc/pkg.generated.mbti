@@ -2,11 +2,17 @@
 package "ryota0624/oauth2/oidc"
 
 import {
-  "ryota0624/oauth2/oauth2",
+  "ryota0624/oauth2",
 }
 
 // Values
+pub async fn fetch_discovery_document(String, @oauth2.OAuth2HttpClient) -> Result[DiscoveryDocument, @oauth2.OAuth2Error]
+
+pub async fn fetch_google_discovery(@oauth2.OAuth2HttpClient) -> Result[DiscoveryDocument, @oauth2.OAuth2Error]
+
 pub fn get_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken, @oauth2.OAuth2Error]
+
+pub fn google_issuer_url() -> String
 
 pub fn parse_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken?, @oauth2.OAuth2Error]
 
@@ -15,6 +21,30 @@ pub fn parse_userinfo(String) -> Result[UserInfo, @oauth2.OAuth2Error]
 // Errors
 
 // Types and methods
+pub struct DiscoveryDocument {
+  issuer : String
+  authorization_endpoint : String
+  token_endpoint : String
+  jwks_uri : String
+  userinfo_endpoint : String?
+  scopes_supported : Array[String]?
+  response_types_supported : Array[String]?
+  revocation_endpoint : String?
+  introspection_endpoint : String?
+  code_challenge_methods_supported : Array[String]?
+}
+pub fn DiscoveryDocument::authorization_endpoint(Self) -> String
+pub fn DiscoveryDocument::authorization_url(Self) -> @oauth2.AuthUrl
+pub fn DiscoveryDocument::issuer(Self) -> String
+pub fn DiscoveryDocument::jwks_uri(Self) -> String
+pub fn DiscoveryDocument::response_types_supported(Self) -> Array[String]?
+pub fn DiscoveryDocument::scopes_supported(Self) -> Array[String]?
+pub fn DiscoveryDocument::token_endpoint(Self) -> String
+pub fn DiscoveryDocument::token_url(Self) -> @oauth2.TokenUrl
+pub fn DiscoveryDocument::userinfo_endpoint(Self) -> String?
+pub fn DiscoveryDocument::userinfo_url(Self) -> UserInfoUrl?
+pub impl Show for DiscoveryDocument
+
 pub struct IdToken {
   raw : String
   header : JwtHeader

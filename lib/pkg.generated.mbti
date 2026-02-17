@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "ryota0624/oauth2/oauth2"
+package "ryota0624/oauth2"
 
 // Values
 pub fn base64url_encode(String) -> String
