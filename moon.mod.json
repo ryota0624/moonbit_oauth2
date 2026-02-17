@@ -7,7 +7,7 @@
     "moonbitlang/x": "0.4.40"
   },
   "readme": "README.mbt.md",
-  "repository": "https://github.com/ryota0624/oauth2",
+  "repository": "https://github.com/ryota0624/moonbit_oauth2",
   "license": "Apache-2.0",
   "keywords": [
     "oauth2",
