@@ -19,7 +19,7 @@ test "parse valid RSA JWK with all fields" {
       assert_false(jwk.e is None)
       assert_true(jwk.is_rsa())
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -41,7 +41,7 @@ test "parse valid RSA JWK with required fields only" {
       assert_eq(jwk.n, Some("test_modulus"))
       assert_eq(jwk.e, Some("AQAB"))
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -58,7 +58,7 @@ test "parse JWK with optional use and alg" {
       assert_eq(jwk.use_(), Some("sig"))
       assert_eq(jwk.alg(), Some("RS256"))
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -135,7 +135,7 @@ test "parse valid JWKSet with multiple keys" {
       assert_eq(keys[0].kid(), "key1")
       assert_eq(keys[1].kid(), "key2")
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -151,7 +151,7 @@ test "parse valid JWKSet with single key" {
       assert_eq(keys.length(), 1)
       assert_eq(keys[0].kid(), "key1")
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -180,7 +180,7 @@ test "parse skips invalid JWKs in array" {
       assert_eq(keys[0].kid(), "key1")
       assert_eq(keys[1].kid(), "key3")
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -196,7 +196,7 @@ test "find_by_kid returns correct key" {
         Some(jwk) => assert_eq(jwk.kid(), "key2")
         None => assert_false(true)
       }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -208,7 +208,7 @@ test "find_by_kid returns None for non-existent kid" {
   let result = parse_jwks(json)
   match result {
     Ok(jwks) => assert_true(jwks.find_by_kid("nonexistent") is None)
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -227,7 +227,7 @@ test "find_rsa_key_by_kid returns RSA key" {
         }
         None => assert_false(true)
       }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -239,7 +239,7 @@ test "find_rsa_key_by_kid returns None for non-RSA key" {
   let result = parse_jwks(json)
   match result {
     Ok(jwks) => assert_true(jwks.find_rsa_key_by_kid("key1") is None)
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -254,7 +254,7 @@ test "get_all_keys returns all keys" {
       let keys = jwks.get_all_keys()
       assert_eq(keys.length(), 2)
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -269,7 +269,7 @@ test "is_rsa returns true for RSA key" {
       let keys = jwks.get_all_keys()
       assert_true(keys[0].is_rsa())
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -284,7 +284,7 @@ test "is_rsa returns false for non-RSA key" {
       let keys = jwks.get_all_keys()
       assert_false(keys[0].is_rsa())
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -299,7 +299,7 @@ test "is_ec returns true for EC key" {
       let keys = jwks.get_all_keys()
       assert_true(keys[0].is_ec())
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -314,7 +314,7 @@ test "is_ec returns false for non-EC key" {
       let keys = jwks.get_all_keys()
       assert_false(keys[0].is_ec())
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -329,7 +329,7 @@ test "rsa_modulus returns correct value" {
       let keys = jwks.get_all_keys()
       assert_eq(keys[0].rsa_modulus(), Some("test_modulus"))
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -344,7 +344,7 @@ test "rsa_exponent returns correct value" {
       let keys = jwks.get_all_keys()
       assert_eq(keys[0].rsa_exponent(), Some("AQAB"))
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 

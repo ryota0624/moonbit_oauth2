@@ -4,7 +4,7 @@
 /// Test verify_claims succeeds with valid token
 test "verify_claims succeeds with valid token" {
   let token_json = "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"test\",\"n\":\"test\",\"e\":\"AQAB\"}]}"
-  let jwks = match parse_jwks(token_json) {
+  let _jwks = match parse_jwks(token_json) {
     Ok(j) => j
     Err(_) => {
       assert_false(true)

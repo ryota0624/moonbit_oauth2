@@ -22,7 +22,7 @@ test "parse valid discovery document with all fields" {
       )
       assert_false(doc.code_challenge_methods_supported is None)
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -42,7 +42,7 @@ test "parse valid discovery document with required fields only" {
       assert_true(doc.scopes_supported is None)
       assert_true(doc.response_types_supported is None)
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -126,7 +126,7 @@ test "issuer returns correct value" {
   let result = parse_discovery_document(json)
   match result {
     Ok(doc) => assert_eq(doc.issuer(), "https://example.com")
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -139,7 +139,7 @@ test "authorization_endpoint returns correct value" {
   match result {
     Ok(doc) =>
       assert_eq(doc.authorization_endpoint(), "https://example.com/authorize")
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -151,7 +151,7 @@ test "token_endpoint returns correct value" {
   let result = parse_discovery_document(json)
   match result {
     Ok(doc) => assert_eq(doc.token_endpoint(), "https://example.com/token")
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -163,7 +163,7 @@ test "jwks_uri returns correct value" {
   let result = parse_discovery_document(json)
   match result {
     Ok(doc) => assert_eq(doc.jwks_uri(), "https://example.com/jwks")
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -178,7 +178,7 @@ test "optional field returns None when missing" {
       assert_true(doc.userinfo_endpoint() is None)
       assert_true(doc.scopes_supported() is None)
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -191,7 +191,7 @@ test "optional field returns Some when present" {
   match result {
     Ok(doc) =>
       assert_eq(doc.userinfo_endpoint(), Some("https://example.com/userinfo"))
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -206,7 +206,7 @@ test "authorization_url creates AuthUrl correctly" {
       let auth_url = doc.authorization_url()
       assert_eq(auth_url.to_string(), "https://example.com/authorize")
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -221,7 +221,7 @@ test "token_url creates TokenUrl correctly" {
       let token_url = doc.token_url()
       assert_eq(token_url.to_string(), "https://example.com/token")
     }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -237,7 +237,7 @@ test "userinfo_url creates UserInfoUrl correctly" {
         Some(url) => assert_eq(url.to_string(), "https://example.com/userinfo")
         None => assert_false(true)
       }
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }
 
@@ -249,6 +249,6 @@ test "userinfo_url returns None when endpoint missing" {
   let result = parse_discovery_document(json)
   match result {
     Ok(doc) => assert_true(doc.userinfo_url() is None)
-    Err(e) => assert_false(true)
+    Err(_) => assert_false(true)
   }
 }

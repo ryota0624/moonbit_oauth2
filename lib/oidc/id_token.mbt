@@ -470,7 +470,7 @@ pub fn IdToken::verify_claims(
 /// 2. Find matching public key in JWKS
 /// 3. Verify RS256 signature
 pub fn IdToken::verify_signature(
-  self : IdToken,
+  _self : IdToken,
   _jwks : JsonWebKeySet,
 ) -> Result[Unit, VerificationError] {
   // TODO: Implement RS256 signature verification when crypto library supports it
