@@ -1,21 +1,106 @@
 ///| HTTP Client Implementation using mizchi/x
 
 ///|
-/// OAuth2HttpClient provides HTTP functionality for OAuth2 operations
-pub struct OAuth2HttpClient {
+/// OAuth2HttpClientConfig holds configuration for OAuth2HttpClient
+pub struct OAuth2HttpClientConfig {
+  max_retries : Int // Maximum number of retries (default: 3)
+  base_delay_ms : Int // Base delay for exponential backoff in milliseconds (default: 1000)
+  custom_headers : HttpHeaders? // Custom headers to add to all requests
+  user_agent : String? // User-Agent header
   debug : Bool // Debug output flag (default: false)
 }
 
 ///|
-/// Create a new OAuth2HttpClient with debug output disabled (default)
+/// Create default OAuth2HttpClientConfig
+pub fn OAuth2HttpClientConfig::default() -> OAuth2HttpClientConfig {
+  {
+    max_retries: 3,
+    base_delay_ms: 1000,
+    custom_headers: None,
+    user_agent: None,
+    debug: false,
+  }
+}
+
+///|
+/// Create OAuth2HttpClientConfig with builder pattern
+pub fn OAuth2HttpClientConfig::builder() -> OAuth2HttpClientConfig {
+  OAuth2HttpClientConfig::default()
+}
+
+///|
+/// Set max_retries for OAuth2HttpClientConfig
+pub fn OAuth2HttpClientConfig::with_max_retries(
+  self : OAuth2HttpClientConfig,
+  max_retries : Int,
+) -> OAuth2HttpClientConfig {
+  { ..self, max_retries, }
+}
+
+///|
+/// Set base_delay_ms for OAuth2HttpClientConfig
+pub fn OAuth2HttpClientConfig::with_base_delay_ms(
+  self : OAuth2HttpClientConfig,
+  base_delay_ms : Int,
+) -> OAuth2HttpClientConfig {
+  { ..self, base_delay_ms, }
+}
+
+///|
+/// Set custom_headers for OAuth2HttpClientConfig
+pub fn OAuth2HttpClientConfig::with_custom_headers(
+  self : OAuth2HttpClientConfig,
+  custom_headers : HttpHeaders,
+) -> OAuth2HttpClientConfig {
+  { ..self, custom_headers: Some(custom_headers) }
+}
+
+///|
+/// Set user_agent for OAuth2HttpClientConfig
+pub fn OAuth2HttpClientConfig::with_user_agent(
+  self : OAuth2HttpClientConfig,
+  user_agent : String,
+) -> OAuth2HttpClientConfig {
+  { ..self, user_agent: Some(user_agent) }
+}
+
+///|
+/// Set debug for OAuth2HttpClientConfig
+pub fn OAuth2HttpClientConfig::with_debug(
+  self : OAuth2HttpClientConfig,
+  debug : Bool,
+) -> OAuth2HttpClientConfig {
+  { ..self, debug, }
+}
+
+///|
+/// OAuth2HttpClient provides HTTP functionality for OAuth2 operations
+pub struct OAuth2HttpClient {
+  config : OAuth2HttpClientConfig
+}
+
+///|
+/// Create a new OAuth2HttpClient with default configuration
 pub fn OAuth2HttpClient::new() -> OAuth2HttpClient {
-  { debug: false }
+  { config: OAuth2HttpClientConfig::default() }
+}
+
+///|
+/// Create a new OAuth2HttpClient with custom configuration
+pub fn OAuth2HttpClient::new_with_config(
+  config : OAuth2HttpClientConfig,
+) -> OAuth2HttpClient {
+  { config, }
 }
 
 ///|
 /// Create a new OAuth2HttpClient with configurable debug output
+/// This method is provided for backward compatibility
 pub fn OAuth2HttpClient::new_with_debug(debug : Bool) -> OAuth2HttpClient {
-  { debug, }
+  {
+    config: OAuth2HttpClientConfig::default()
+    |> OAuth2HttpClientConfig::with_debug(debug),
+  }
 }
 
 ///|
@@ -24,6 +109,49 @@ fn convert_headers(headers : HttpHeaders) -> Map[String, String] {
   let result : Map[String, String] = {}
   headers.each(fn(key, value) { result[key] = value })
   result
+}
+
+///|
+/// Merge custom headers and user agent into base headers
+/// Custom headers are applied first, then base headers override them
+/// This ensures that request-specific headers take precedence
+fn merge_headers(
+  base : HttpHeaders,
+  custom : HttpHeaders?,
+  user_agent : String?,
+) -> HttpHeaders {
+  let result : HttpHeaders = {}
+
+  // Apply custom headers first
+  match custom {
+    Some(headers) => headers.each(fn(key, value) { result[key] = value })
+    None => ()
+  }
+
+  // Apply user agent if specified
+  match user_agent {
+    Some(ua) => result["User-Agent"] = ua
+    None => ()
+  }
+
+  // Apply base headers (overrides custom headers)
+  base.each(fn(key, value) { result[key] = value })
+
+  result
+}
+
+///|
+/// Calculate exponential backoff delay in milliseconds
+/// Formula: base_delay_ms * (2 ^ retry_count)
+/// Examples: 1000ms -> 2000ms -> 4000ms -> 8000ms
+fn calculate_backoff(retry_count : Int, base_delay_ms : Int) -> Int {
+  base_delay_ms * (1 << retry_count) // bit shift for 2^n
+}
+
+///|
+/// Check if the HTTP response status code is retryable (5xx errors)
+fn is_retryable_status(status_code : Int) -> Bool {
+  status_code >= 500 && status_code < 600
 }
 
 ///|
@@ -159,18 +287,25 @@ fn extract_json_string_value(json : String, key : String) -> String? {
 }
 
 ///|
-/// Send HTTP POST request using mizchi/x
-pub async fn OAuth2HttpClient::post(
+/// Internal POST request without retry logic
+async fn OAuth2HttpClient::post_internal(
   self : OAuth2HttpClient,
   url : String,
   headers : HttpHeaders,
   body : String,
 ) -> Result[HttpResponse, OAuth2Error] {
+  // Merge custom headers and user agent into request headers
+  let merged_headers = merge_headers(
+    headers,
+    self.config.custom_headers,
+    self.config.user_agent,
+  )
+
   // Convert headers to mizchi/x format
-  let http_headers = convert_headers(headers)
+  let http_headers = convert_headers(merged_headers)
 
   // Debug: print request details
-  if self.debug {
+  if self.config.debug {
     println("DEBUG http_client POST:")
     println("  URL: \{url}")
     println("  Body length: \{body.length()}")
@@ -181,7 +316,7 @@ pub async fn OAuth2HttpClient::post(
     err => return Err(HttpError("HTTP request failed: \{err}"))
   }
 
-  if self.debug {
+  if self.config.debug {
     println("DEBUG after @http.post:")
     println("  Response code: \{response.code}")
   }
@@ -194,7 +329,7 @@ pub async fn OAuth2HttpClient::post(
   let body_text = response_body.text()
 
   // Debug: print response details
-  if self.debug {
+  if self.config.debug {
     println("DEBUG http_client response:")
     println("  Status: \{response.code}")
     println("  Body length: \{body_text.length()}")
@@ -214,18 +349,87 @@ pub async fn OAuth2HttpClient::post(
 }
 
 ///|
-/// Send HTTP GET request
-/// Used for OIDC UserInfo Endpoint and other GET requests
-pub async fn OAuth2HttpClient::get(
+/// Send HTTP POST request with retry logic
+pub async fn OAuth2HttpClient::post(
+  self : OAuth2HttpClient,
+  url : String,
+  headers : HttpHeaders,
+  body : String,
+) -> Result[HttpResponse, OAuth2Error] {
+  let mut retry_count = 0
+  let mut result : Result[HttpResponse, OAuth2Error]? = None
+
+  while result is None {
+    match self.post_internal(url, headers, body) {
+      Ok(response) =>
+        // Retry on 5xx errors
+        if is_retryable_status(response.status_code) &&
+          retry_count < self.config.max_retries {
+          if self.config.debug {
+            println(
+              "DEBUG retry POST (attempt \{retry_count + 1}/\{self.config.max_retries}): status \{response.status_code}",
+            )
+          }
+
+          let backoff_ms = calculate_backoff(
+            retry_count,
+            self.config.base_delay_ms,
+          )
+          @async.sleep(backoff_ms)
+          retry_count = retry_count + 1
+        } else {
+          result = Some(Ok(response))
+        }
+      Err(err) => {
+        // Do not retry on non-network errors (e.g., OAuth2 errors)
+        // Only retry on HttpError which indicates network issues
+        let should_retry = match err {
+          HttpError(_) => retry_count < self.config.max_retries
+          _ => false
+        }
+
+        if should_retry {
+          if self.config.debug {
+            println(
+              "DEBUG retry POST (attempt \{retry_count + 1}/\{self.config.max_retries}): \{err}",
+            )
+          }
+
+          let backoff_ms = calculate_backoff(
+            retry_count,
+            self.config.base_delay_ms,
+          )
+          @async.sleep(backoff_ms)
+          retry_count = retry_count + 1
+        } else {
+          result = Some(Err(err))
+        }
+      }
+    }
+  }
+
+  result.unwrap()
+}
+
+///|
+/// Internal GET request without retry logic
+async fn OAuth2HttpClient::get_internal(
   self : OAuth2HttpClient,
   url : String,
   headers : HttpHeaders,
 ) -> Result[HttpResponse, OAuth2Error] {
+  // Merge custom headers and user agent into request headers
+  let merged_headers = merge_headers(
+    headers,
+    self.config.custom_headers,
+    self.config.user_agent,
+  )
+
   // Convert headers to mizchi/x format
-  let http_headers = convert_headers(headers)
+  let http_headers = convert_headers(merged_headers)
 
   // Debug: print request details
-  if self.debug {
+  if self.config.debug {
     println("DEBUG http_client GET:")
     println("  URL: \{url}")
   }
@@ -235,7 +439,7 @@ pub async fn OAuth2HttpClient::get(
     err => return Err(HttpError("HTTP request failed: \{err}"))
   }
 
-  if self.debug {
+  if self.config.debug {
     println("DEBUG after @http.get:")
     println("  Response code: \{response.code}")
   }
@@ -248,7 +452,7 @@ pub async fn OAuth2HttpClient::get(
   let body_text = response_body.text()
 
   // Debug: print response details
-  if self.debug {
+  if self.config.debug {
     println("DEBUG http_client response:")
     println("  Status: \{response.code}")
     println("  Body length: \{body_text.length()}")
@@ -265,6 +469,69 @@ pub async fn OAuth2HttpClient::get(
   }
 
   Ok(HttpResponse::new(response.code, response_headers, body_text))
+}
+
+///|
+/// Send HTTP GET request with retry logic
+/// Used for OIDC UserInfo Endpoint and other GET requests
+pub async fn OAuth2HttpClient::get(
+  self : OAuth2HttpClient,
+  url : String,
+  headers : HttpHeaders,
+) -> Result[HttpResponse, OAuth2Error] {
+  let mut retry_count = 0
+  let mut result : Result[HttpResponse, OAuth2Error]? = None
+
+  while result is None {
+    match self.get_internal(url, headers) {
+      Ok(response) =>
+        // Retry on 5xx errors
+        if is_retryable_status(response.status_code) &&
+          retry_count < self.config.max_retries {
+          if self.config.debug {
+            println(
+              "DEBUG retry GET (attempt \{retry_count + 1}/\{self.config.max_retries}): status \{response.status_code}",
+            )
+          }
+
+          let backoff_ms = calculate_backoff(
+            retry_count,
+            self.config.base_delay_ms,
+          )
+          @async.sleep(backoff_ms)
+          retry_count = retry_count + 1
+        } else {
+          result = Some(Ok(response))
+        }
+      Err(err) => {
+        // Do not retry on non-network errors (e.g., OAuth2 errors)
+        // Only retry on HttpError which indicates network issues
+        let should_retry = match err {
+          HttpError(_) => retry_count < self.config.max_retries
+          _ => false
+        }
+
+        if should_retry {
+          if self.config.debug {
+            println(
+              "DEBUG retry GET (attempt \{retry_count + 1}/\{self.config.max_retries}): \{err}",
+            )
+          }
+
+          let backoff_ms = calculate_backoff(
+            retry_count,
+            self.config.base_delay_ms,
+          )
+          @async.sleep(backoff_ms)
+          retry_count = retry_count + 1
+        } else {
+          result = Some(Err(err))
+        }
+      }
+    }
+  }
+
+  result.unwrap()
 }
 
 ///|

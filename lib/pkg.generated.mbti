@@ -141,12 +141,28 @@ pub impl Eq for OAuth2Error
 pub impl Show for OAuth2Error
 
 pub struct OAuth2HttpClient {
-  debug : Bool
+  config : OAuth2HttpClientConfig
 }
 pub async fn OAuth2HttpClient::get(Self, String, Map[String, String]) -> Result[HttpResponse, OAuth2Error]
 pub fn OAuth2HttpClient::new() -> Self
+pub fn OAuth2HttpClient::new_with_config(OAuth2HttpClientConfig) -> Self
 pub fn OAuth2HttpClient::new_with_debug(Bool) -> Self
 pub async fn OAuth2HttpClient::post(Self, String, Map[String, String], String) -> Result[HttpResponse, OAuth2Error]
+
+pub struct OAuth2HttpClientConfig {
+  max_retries : Int
+  base_delay_ms : Int
+  custom_headers : Map[String, String]?
+  user_agent : String?
+  debug : Bool
+}
+pub fn OAuth2HttpClientConfig::builder() -> Self
+pub fn OAuth2HttpClientConfig::default() -> Self
+pub fn OAuth2HttpClientConfig::with_base_delay_ms(Self, Int) -> Self
+pub fn OAuth2HttpClientConfig::with_custom_headers(Self, Map[String, String]) -> Self
+pub fn OAuth2HttpClientConfig::with_debug(Self, Bool) -> Self
+pub fn OAuth2HttpClientConfig::with_max_retries(Self, Int) -> Self
+pub fn OAuth2HttpClientConfig::with_user_agent(Self, String) -> Self
 
 pub struct PasswordRequest {
   token_url : TokenUrl
