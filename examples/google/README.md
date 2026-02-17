@@ -51,6 +51,34 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/callback
 GOOGLE_SCOPES=openid email profile
 ```
 
+### 3. Run the executable sample
+
+This directory includes a complete, executable OAuth2 flow example:
+
+```bash
+# Set environment variables
+export GOOGLE_CLIENT_ID='your-client-id.apps.googleusercontent.com'
+export GOOGLE_CLIENT_SECRET='your-client-secret'
+export GOOGLE_REDIRECT_URI='http://localhost:3000/callback'
+
+# Run the sample (first time - generates authorization URL)
+moon run -p examples/google
+
+# The program will display an authorization URL
+# Open it in your browser, authorize the app, and get the authorization code
+
+# Set the authorization code and run again
+export AUTHORIZATION_CODE='the-code-from-redirect-url'
+moon run -p examples/google
+```
+
+The sample demonstrates:
+- ✅ Fetching Google's Discovery Document
+- ✅ Generating authorization URL with PKCE
+- ✅ Exchanging authorization code for tokens
+- ✅ Verifying ID Token
+- ✅ Extracting user information
+
 ---
 
 ## Authorization Code Flow with PKCE

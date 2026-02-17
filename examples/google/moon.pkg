@@ -1,0 +1,11 @@
+import {
+  "ryota0624/oauth2",
+  "ryota0624/oauth2/oidc",
+  "ryota0624/oauth2/providers/google",
+  "moonbitlang/async",
+  "moonbitlang/x/sys",
+}
+
+options(
+  "is-main": true,
+)
