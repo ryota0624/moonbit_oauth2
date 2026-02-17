@@ -58,18 +58,18 @@ pub fn JWKError::message(self : JWKError) -> String {
 ///
 /// # Returns
 /// * `Ok(JsonWebKeySet)` - Successfully fetched and parsed JWKS
-/// * `Err(OAuth2Error)` - Failed to fetch or parse JWKS
+/// * `Err(JWKError)` - Failed to fetch or parse JWKS
 ///
 /// # Example
 /// ```moonbit nocheck
 /// let http_client = @oauth2.OAuth2HttpClient::new()
-/// let discovery = @oidc.fetch_google_discovery(http_client)?
-/// let jwks = @oidc.fetch_jwks(discovery.jwks_uri, http_client)?
+/// let discovery = @oidc.fetch_discovery_document("https://accounts.google.com", http_client)?
+/// let jwks = @oidc.fetch_jwks(discovery.jwks_uri(), http_client)?
 /// ```
 pub async fn fetch_jwks(
   jwks_uri : String,
   http_client : @oauth2.OAuth2HttpClient,
-) -> Result[JsonWebKeySet, @oauth2.OAuth2Error] {
+) -> Result[JsonWebKeySet, JWKError] {
   // Set up headers
   let headers : @oauth2.HttpHeaders = {}
   headers["Accept"] = "application/json"
@@ -79,24 +79,18 @@ pub async fn fetch_jwks(
   let response = match http_client.get(jwks_uri, headers) {
     Ok(resp) => resp
     Err(err) =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Failed to fetch JWKS: \{err.message()}"),
-      )
+      return Err(InvalidJson("Failed to fetch JWKS: \{err.message()}"))
   }
 
   // Check if response is successful
   if response.is_error() {
     return Err(
-      @oauth2.OAuth2Error::new_other(
-        "JWKS request failed with status \{response.status_code}",
-      ),
+      InvalidJson("JWKS request failed with status \{response.status_code}"),
     )
   }
 
-  // Parse JWKS and convert JWKError to OAuth2Error
-  parse_jwks(response.body).map_err(fn(jwk_err) {
-    @oauth2.OAuth2Error::new_other("JWKS parsing failed: \{jwk_err.message()}")
-  })
+  // Parse JWKS
+  parse_jwks(response.body)
 }
 
 ///|

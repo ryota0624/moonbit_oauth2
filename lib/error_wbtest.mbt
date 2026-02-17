@@ -48,9 +48,9 @@ test "OAuth2Error from unknown error code" {
   )
 
   match error {
-    Other(msg) =>
+    ServerError(msg) =>
       assert_eq(msg, "Unknown error: unknown_error - Unknown error occurred")
-    _ => fail("Expected Other error")
+    _ => fail("Expected ServerError for unknown code")
   }
 }
 

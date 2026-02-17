@@ -4,6 +4,24 @@
 /// It wraps the core OAuth2 and OIDC functionality with Google-specific defaults.
 
 ///|
+/// GoogleOAuth2Error represents errors specific to Google OAuth2 operations
+pub enum GoogleOAuth2Error {
+  DiscoveryFailed(@oidc.DiscoveryError) // Failed to fetch or parse discovery document
+  JwksFailed(@oidc.JWKError) // Failed to fetch or parse JWKS
+  VerificationFailed(@oidc.VerificationError) // ID Token verification failed
+} derive(Show, Eq)
+
+///|
+/// Convert GoogleOAuth2Error to string message
+pub fn GoogleOAuth2Error::message(self : GoogleOAuth2Error) -> String {
+  match self {
+    DiscoveryFailed(err) => "Discovery failed: \{err.message()}"
+    JwksFailed(err) => "JWKS fetch failed: \{err.message()}"
+    VerificationFailed(err) => "ID Token verification failed: \{err.message()}"
+  }
+}
+
+///|
 /// Google Issuer URL
 ///
 /// Returns the Google OpenID Connect issuer URL.
@@ -24,7 +42,7 @@ pub fn google_issuer() -> String {
 ///
 /// # Returns
 /// * `Ok(DiscoveryDocument)` - Successfully fetched discovery document
-/// * `Err(OAuth2Error)` - Failed to fetch or parse discovery document
+/// * `Err(GoogleOAuth2Error)` - Failed to fetch or parse discovery document
 ///
 /// # Example
 /// ```moonbit nocheck
@@ -34,8 +52,10 @@ pub fn google_issuer() -> String {
 /// ```
 pub async fn fetch_discovery(
   http_client : @oauth2.OAuth2HttpClient,
-) -> Result[@oidc.DiscoveryDocument, @oauth2.OAuth2Error] {
-  @oidc.fetch_discovery_document(google_issuer(), http_client)
+) -> Result[@oidc.DiscoveryDocument, GoogleOAuth2Error] {
+  @oidc.fetch_discovery_document(google_issuer(), http_client).map_err(fn(e) {
+    DiscoveryFailed(e)
+  })
 }
 
 ///|
@@ -56,7 +76,7 @@ pub async fn fetch_discovery(
 ///
 /// # Returns
 /// * `Ok(())` - Token claims are valid (signature not verified)
-/// * `Err(OAuth2Error)` - Token is invalid
+/// * `Err(GoogleOAuth2Error)` - Token is invalid
 ///
 /// # Example
 /// ```moonbit nocheck
@@ -71,7 +91,7 @@ pub async fn verify_id_token(
   client_id : String,
   http_client : @oauth2.OAuth2HttpClient,
   nonce : String?,
-) -> Result[Unit, @oauth2.OAuth2Error] {
+) -> Result[Unit, GoogleOAuth2Error] {
   // 1. Fetch Discovery Document
   let discovery = match fetch_discovery(http_client) {
     Ok(doc) => doc
@@ -81,22 +101,16 @@ pub async fn verify_id_token(
   // 2. Fetch JWKS
   let jwks = match @oidc.fetch_jwks(discovery.jwks_uri(), http_client) {
     Ok(keys) => keys
-    Err(e) => return Err(e)
+    Err(e) => return Err(JwksFailed(e))
   }
 
   // 3. Get current time (seconds since epoch)
   let current_time = get_current_unix_time()
 
   // 4. Verify token (claims only - signature verification not implemented)
-  match id_token.verify(jwks, client_id, google_issuer(), current_time, nonce) {
-    Ok(_) => Ok(())
-    Err(verification_err) =>
-      Err(
-        @oauth2.OAuth2Error::new_other(
-          "ID Token verification failed: \{verification_err.message()}",
-        ),
-      )
-  }
+  id_token
+  .verify(jwks, client_id, google_issuer(), current_time, nonce)
+  .map_err(fn(e) { VerificationFailed(e) })
 }
 
 ///|

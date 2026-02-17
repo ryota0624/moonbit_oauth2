@@ -27,8 +27,6 @@ pub enum OAuth2Error {
   HttpError(String)
   /// JSON parse error
   ParseError(String)
-  /// Generic error
-  Other(String)
 } derive(Show, Eq)
 
 ///|
@@ -53,7 +51,7 @@ pub fn OAuth2Error::from_error_code(
     "unsupported_response_type" => UnsupportedResponseType(desc)
     "server_error" => ServerError(desc)
     "temporarily_unavailable" => TemporarilyUnavailable(desc)
-    _ => Other("Unknown error: \{error_code} - \{desc}")
+    _ => ServerError("Unknown error: \{error_code} - \{desc}")
   }
 }
 
@@ -73,7 +71,6 @@ pub fn OAuth2Error::message(self : OAuth2Error) -> String {
     TemporarilyUnavailable(msg) => "Temporarily unavailable: \{msg}"
     HttpError(msg) => "HTTP error: \{msg}"
     ParseError(msg) => "Parse error: \{msg}"
-    Other(msg) => msg
   }
 }
 
@@ -87,10 +84,4 @@ pub fn OAuth2Error::new_parse_error(msg : String) -> OAuth2Error {
 /// Create an HTTP error
 pub fn OAuth2Error::new_http_error(msg : String) -> OAuth2Error {
   HttpError(msg)
-}
-
-///|
-/// Create a generic error
-pub fn OAuth2Error::new_other(msg : String) -> OAuth2Error {
-  Other(msg)
 }

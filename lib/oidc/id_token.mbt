@@ -50,6 +50,7 @@ pub enum IdTokenError {
   InvalidStructure(String) // Structure validation failed
   InvalidFieldType(String) // Field has wrong type
   MissingRequiredField(String) // Required field is missing
+  MissingIdToken // ID Token not present in response
 } derive(Show, Eq)
 
 ///|
@@ -62,6 +63,7 @@ pub fn IdTokenError::message(self : IdTokenError) -> String {
     InvalidStructure(msg) => "Invalid structure: \{msg}"
     InvalidFieldType(msg) => "Invalid field type: \{msg}"
     MissingRequiredField(msg) => "Missing required field: \{msg}"
+    MissingIdToken => "ID Token not present in response"
   }
 }
 

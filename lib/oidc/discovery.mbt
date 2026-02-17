@@ -51,7 +51,7 @@ pub fn DiscoveryError::message(self : DiscoveryError) -> String {
 ///
 /// # Returns
 /// * `Ok(DiscoveryDocument)` - Successfully fetched and parsed discovery document
-/// * `Err(OAuth2Error)` - Failed to fetch or parse discovery document
+/// * `Err(DiscoveryError)` - Failed to fetch or parse discovery document
 ///
 /// # Example
 /// ```moonbit nocheck
@@ -62,7 +62,7 @@ pub fn DiscoveryError::message(self : DiscoveryError) -> String {
 pub async fn fetch_discovery_document(
   issuer_url : String,
   http_client : @oauth2.OAuth2HttpClient,
-) -> Result[DiscoveryDocument, @oauth2.OAuth2Error] {
+) -> Result[DiscoveryDocument, DiscoveryError] {
   // Construct well-known URL
   let discovery_url = "\{issuer_url}/.well-known/openid-configuration"
 
@@ -76,27 +76,21 @@ pub async fn fetch_discovery_document(
     Ok(resp) => resp
     Err(err) =>
       return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Failed to fetch discovery document: \{err.message()}",
-        ),
+        InvalidJson("Failed to fetch discovery document: \{err.message()}"),
       )
   }
 
   // Check if response is successful
   if response.is_error() {
     return Err(
-      @oauth2.OAuth2Error::new_other(
+      InvalidJson(
         "Discovery document request failed with status \{response.status_code}",
       ),
     )
   }
 
-  // Parse discovery document and convert DiscoveryError to OAuth2Error
-  parse_discovery_document(response.body).map_err(fn(disc_err) {
-    @oauth2.OAuth2Error::new_other(
-      "Discovery document parsing failed: \{disc_err.message()}",
-    )
-  })
+  // Parse discovery document
+  parse_discovery_document(response.body)
 }
 
 ///|
@@ -309,34 +303,4 @@ pub fn DiscoveryDocument::userinfo_url(
     Some(url) => Some(UserInfoUrl::new(url))
     None => None
   }
-}
-
-///|
-/// Google issuer URL
-pub fn google_issuer_url() -> String {
-  "https://accounts.google.com"
-}
-
-///|
-/// Fetch Google Discovery Document
-///
-/// Convenience function for fetching Google's OpenID Connect Discovery Document.
-///
-/// # Arguments
-/// * `http_client` - HTTP client for making requests
-///
-/// # Returns
-/// * `Ok(DiscoveryDocument)` - Successfully fetched Google discovery document
-/// * `Err(OAuth2Error)` - Failed to fetch or parse discovery document
-///
-/// # Example
-/// ```moonbit nocheck
-/// let http_client = @oauth2.OAuth2HttpClient::new()
-/// let discovery = fetch_google_discovery(http_client)?
-/// println("Google authorization endpoint: \{discovery.authorization_endpoint}")
-/// ```
-pub async fn fetch_google_discovery(
-  http_client : @oauth2.OAuth2HttpClient,
-) -> Result[DiscoveryDocument, @oauth2.OAuth2Error] {
-  fetch_discovery_document(google_issuer_url(), http_client)
 }

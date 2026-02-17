@@ -252,9 +252,3 @@ test "userinfo_url returns None when endpoint missing" {
     Err(e) => assert_false(true)
   }
 }
-
-///|
-/// Test google_issuer_url returns correct URL
-test "google_issuer_url returns correct URL" {
-  assert_eq(google_issuer_url(), "https://accounts.google.com")
-}

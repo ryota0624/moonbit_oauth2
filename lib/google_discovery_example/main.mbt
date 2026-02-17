@@ -12,8 +12,8 @@ async fn main {
   println("Fetching Google Discovery Document...")
   println("URL: https://accounts.google.com/.well-known/openid-configuration\n")
 
-  // Fetch discovery document using the helper function
-  let result = @oidc.fetch_google_discovery(http_client)
+  // Fetch discovery document using the Google provider
+  let result = @google.fetch_discovery(http_client)
 
   match result {
     Ok(doc) => {
