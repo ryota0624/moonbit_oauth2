@@ -347,3 +347,189 @@ pub fn IdToken::name(self : IdToken) -> String? {
 pub fn IdToken::email(self : IdToken) -> String? {
   self.payload.email
 }
+
+///|
+/// VerificationError represents errors that occur during ID Token verification
+pub enum VerificationError {
+  TokenExpired(Int64, Int64) // (exp, current_time)
+  InvalidAudience(String, String) // (expected, actual)
+  InvalidIssuer(String, String) // (expected, actual)
+  InvalidNonce(String, String) // (expected, actual)
+  MissingNonce // Expected nonce but token has none
+  SignatureVerificationNotImplemented // RS256 signature verification not yet implemented
+} derive(Show, Eq)
+
+///|
+/// Convert VerificationError to string message
+pub fn VerificationError::message(self : VerificationError) -> String {
+  match self {
+    TokenExpired(exp, now) => "ID Token has expired (exp: \{exp}, now: \{now})"
+    InvalidAudience(expected, actual) =>
+      "Invalid audience (expected: \{expected}, actual: \{actual})"
+    InvalidIssuer(expected, actual) =>
+      "Invalid issuer (expected: \{expected}, actual: \{actual})"
+    InvalidNonce(expected, actual) =>
+      "Invalid nonce (expected: \{expected}, actual: \{actual})"
+    MissingNonce => "Expected nonce but token does not contain one"
+    SignatureVerificationNotImplemented =>
+      "RS256 signature verification is not yet implemented. Please verify signatures externally or use a service that provides signature verification."
+  }
+}
+
+///|
+/// Verify ID Token claims (expiration, audience, issuer, nonce)
+///
+/// This method performs validation of the ID Token claims without signature verification.
+/// For production use, you MUST also verify the signature externally.
+///
+/// # Arguments
+/// * `expected_audience` - Expected audience (client_id)
+/// * `expected_issuer` - Expected issuer URL (e.g., "https://accounts.google.com")
+/// * `current_time` - Current UNIX timestamp in seconds
+/// * `expected_nonce` - Expected nonce (optional, checked if provided)
+///
+/// # Returns
+/// * `Ok(())` - All claims are valid
+/// * `Err(VerificationError)` - Verification failed
+///
+/// # Example
+/// ```moonbit nocheck
+/// let id_token = IdToken::parse(token_string)?
+/// let current_time = 1234567890L
+/// id_token.verify_claims(
+///   "my-client-id",
+///   "https://accounts.google.com",
+///   current_time,
+///   Some("random-nonce")
+/// )?
+/// ```
+pub fn IdToken::verify_claims(
+  self : IdToken,
+  expected_audience : String,
+  expected_issuer : String,
+  current_time : Int64,
+  expected_nonce : String?,
+) -> Result[Unit, VerificationError] {
+  // Check expiration
+  if current_time >= self.payload.exp {
+    return Err(TokenExpired(self.payload.exp, current_time))
+  }
+
+  // Check audience
+  if self.payload.aud != expected_audience {
+    return Err(InvalidAudience(expected_audience, self.payload.aud))
+  }
+
+  // Check issuer
+  if self.payload.iss != expected_issuer {
+    return Err(InvalidIssuer(expected_issuer, self.payload.iss))
+  }
+
+  // Check nonce if expected
+  match expected_nonce {
+    Some(expected) =>
+      match self.payload.nonce {
+        Some(actual) =>
+          if actual != expected {
+            return Err(InvalidNonce(expected, actual))
+          }
+        None => return Err(MissingNonce)
+      }
+    None => ()
+  }
+
+  Ok(())
+}
+
+///|
+/// Verify ID Token signature using JWKS
+///
+/// **NOT YET IMPLEMENTED**
+///
+/// RS256 signature verification requires RSA cryptographic operations which are
+/// not currently available in moonbitlang/x/crypto. This method returns an error
+/// indicating that signature verification must be performed externally.
+///
+/// For production use, you MUST verify signatures using:
+/// - External verification service
+/// - Client-side verification in a different environment
+/// - Server-side verification before passing tokens to MoonBit code
+///
+/// # Arguments
+/// * `jwks` - JSON Web Key Set containing public keys
+///
+/// # Returns
+/// * `Err(SignatureVerificationNotImplemented)` - Always returns this error
+///
+/// # Future Implementation
+/// When RSA signature verification becomes available in moonbitlang/x/crypto,
+/// this method will:
+/// 1. Extract `kid` from JWT header
+/// 2. Find matching public key in JWKS
+/// 3. Verify RS256 signature
+pub fn IdToken::verify_signature(
+  self : IdToken,
+  _jwks : JsonWebKeySet,
+) -> Result[Unit, VerificationError] {
+  // TODO: Implement RS256 signature verification when crypto library supports it
+  Err(SignatureVerificationNotImplemented)
+}
+
+///|
+/// Verify ID Token (both signature and claims)
+///
+/// **WARNING**: Signature verification is not yet implemented.
+/// This method currently only verifies claims. For production use,
+/// you MUST verify signatures externally.
+///
+/// # Arguments
+/// * `jwks` - JSON Web Key Set containing public keys (currently unused)
+/// * `expected_audience` - Expected audience (client_id)
+/// * `expected_issuer` - Expected issuer URL
+/// * `current_time` - Current UNIX timestamp in seconds
+/// * `expected_nonce` - Expected nonce (optional)
+///
+/// # Returns
+/// * `Ok(())` - Claims are valid (signature not checked)
+/// * `Err(VerificationError)` - Verification failed
+///
+/// # Example
+/// ```moonbit nocheck
+/// let id_token = IdToken::parse(token_string)?
+/// let jwks = fetch_jwks(jwks_uri, http_client)?
+/// let current_time = 1234567890L
+///
+/// // Note: This only verifies claims, not signature
+/// id_token.verify(
+///   jwks,
+///   "my-client-id",
+///   "https://accounts.google.com",
+///   current_time,
+///   None
+/// )?
+/// ```
+pub fn IdToken::verify(
+  self : IdToken,
+  _jwks : JsonWebKeySet,
+  expected_audience : String,
+  expected_issuer : String,
+  current_time : Int64,
+  expected_nonce : String?,
+) -> Result[Unit, VerificationError] {
+  // Verify claims (signature verification skipped due to implementation limitations)
+  match
+    self.verify_claims(
+      expected_audience, expected_issuer, current_time, expected_nonce,
+    ) {
+    Ok(_) => ()
+    Err(e) => return Err(e)
+  }
+
+  // TODO: Uncomment when signature verification is implemented
+  // match self.verify_signature(jwks) {
+  //   Ok(_) => ()
+  //   Err(e) => return Err(e)
+  // }
+
+  Ok(())
+}

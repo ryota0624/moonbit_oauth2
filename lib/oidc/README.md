@@ -2,6 +2,43 @@
 
 OpenID Connect (OIDC) implementation for MoonBit.
 
+## Features
+
+✅ **Implemented:**
+- Discovery Document fetching and parsing (RFC 8414)
+- JWKS (JSON Web Key Set) fetching and parsing (RFC 7517)
+- ID Token parsing (JWT format, RFC 7519)
+- ID Token claims verification (exp, aud, iss, nonce)
+- UserInfo endpoint support
+
+⚠️ **Limitations:**
+- **Signature verification not implemented**: RS256 signature verification requires RSA cryptographic operations not currently available in moonbitlang/x/crypto
+  - **For production use**: You MUST verify ID Token signatures externally before trusting the token
+  - See "Signature Verification Workarounds" section below
+
+## Signature Verification Workarounds
+
+Since RS256 signature verification is not yet implemented, you must verify signatures externally:
+
+### Option 1: Server-side verification
+Verify tokens on your backend server (Node.js, Python, Go, etc.) before passing them to MoonBit code.
+
+### Option 2: Use Google's tokeninfo endpoint
+```moonbit
+// Verify token using Google's tokeninfo endpoint
+let response = http_client.get(
+  "https://oauth2.googleapis.com/tokeninfo?id_token=\{id_token_string}",
+  headers
+)?
+// If successful (200 OK), the token is valid
+```
+
+### Option 3: Client library with signature support
+Use a full OAuth2 client library in your runtime environment (JavaScript, etc.) that supports signature verification.
+
+### When signature verification will be added
+This library will implement RS256 verification once RSA signature operations become available in moonbitlang/x/crypto or through FFI.
+
 ## Error Handling Policy
 
 **基本方針: OIDCパッケージは`OAuth2Error`を便利なエラーとして使用しません。**

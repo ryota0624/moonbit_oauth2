@@ -75,6 +75,9 @@ pub fn IdToken::nonce(Self) -> String?
 pub fn IdToken::parse(String) -> Result[Self, IdTokenError]
 pub fn IdToken::raw(Self) -> String
 pub fn IdToken::subject(Self) -> String
+pub fn IdToken::verify(Self, JsonWebKeySet, String, String, Int64, String?) -> Result[Unit, VerificationError]
+pub fn IdToken::verify_claims(Self, String, String, Int64, String?) -> Result[Unit, VerificationError]
+pub fn IdToken::verify_signature(Self, JsonWebKeySet) -> Result[Unit, VerificationError]
 pub impl Show for IdToken
 
 pub struct IdTokenClaims {
@@ -193,6 +196,18 @@ pub fn UserInfoUrl::new(String) -> Self
 pub fn UserInfoUrl::to_string(Self) -> String
 pub impl Eq for UserInfoUrl
 pub impl Show for UserInfoUrl
+
+pub enum VerificationError {
+  TokenExpired(Int64, Int64)
+  InvalidAudience(String, String)
+  InvalidIssuer(String, String)
+  InvalidNonce(String, String)
+  MissingNonce
+  SignatureVerificationNotImplemented
+}
+pub fn VerificationError::message(Self) -> String
+pub impl Eq for VerificationError
+pub impl Show for VerificationError
 
 // Type aliases
 
