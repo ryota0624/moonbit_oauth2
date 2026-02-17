@@ -1,8 +1,8 @@
-///| Google Discovery Document Integration Test
+///|
+/// Google Discovery Document Integration Test
 ///
 /// This example demonstrates fetching Google's OpenID Connect Discovery Document
 /// from the well-known endpoint.
-
 async fn main {
   println("=== Google Discovery Document Test ===\n")
 

@@ -10,6 +10,8 @@ pub async fn fetch_discovery_document(String, @oauth2.OAuth2HttpClient) -> Resul
 
 pub async fn fetch_google_discovery(@oauth2.OAuth2HttpClient) -> Result[DiscoveryDocument, @oauth2.OAuth2Error]
 
+pub async fn fetch_jwks(String, @oauth2.OAuth2HttpClient) -> Result[JsonWebKeySet, @oauth2.OAuth2Error]
+
 pub fn get_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken, @oauth2.OAuth2Error]
 
 pub fn google_issuer_url() -> String
@@ -82,6 +84,34 @@ pub struct IdTokenClaims {
   locale : String?
 }
 pub impl Show for IdTokenClaims
+
+pub struct JsonWebKey {
+  kty : String
+  use_ : String?
+  kid : String
+  alg : String?
+  n : String?
+  e : String?
+}
+pub fn JsonWebKey::alg(Self) -> String?
+pub fn JsonWebKey::is_ec(Self) -> Bool
+pub fn JsonWebKey::is_rsa(Self) -> Bool
+pub fn JsonWebKey::kid(Self) -> String
+pub fn JsonWebKey::kty(Self) -> String
+pub fn JsonWebKey::rsa_exponent(Self) -> String?
+pub fn JsonWebKey::rsa_modulus(Self) -> String?
+pub fn JsonWebKey::use_(Self) -> String?
+pub impl Eq for JsonWebKey
+pub impl Show for JsonWebKey
+
+pub struct JsonWebKeySet {
+  keys : Array[JsonWebKey]
+}
+pub fn JsonWebKeySet::find_by_kid(Self, String) -> JsonWebKey?
+pub fn JsonWebKeySet::find_rsa_key_by_kid(Self, String) -> JsonWebKey?
+pub fn JsonWebKeySet::get_all_keys(Self) -> Array[JsonWebKey]
+pub impl Eq for JsonWebKeySet
+pub impl Show for JsonWebKeySet
 
 pub struct JwtHeader {
   alg : String
