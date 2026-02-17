@@ -94,15 +94,9 @@ pub async fn fetch_jwks(
   }
 
   // Parse JWKS and convert JWKError to OAuth2Error
-  match parse_jwks(response.body) {
-    Ok(jwks) => Ok(jwks)
-    Err(jwk_err) =>
-      Err(
-        @oauth2.OAuth2Error::new_other(
-          "JWKS parsing failed: \{jwk_err.message()}",
-        ),
-      )
-  }
+  parse_jwks(response.body).map_err(fn(jwk_err) {
+    @oauth2.OAuth2Error::new_other("JWKS parsing failed: \{jwk_err.message()}")
+  })
 }
 
 ///|

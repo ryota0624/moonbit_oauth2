@@ -8,10 +8,13 @@ pub fn parse_id_token_from_response(
 ) -> Result[IdToken?, @oauth2.OAuth2Error] {
   match response.id_token() {
     Some(token_str) =>
-      match IdToken::parse(token_str) {
-        Ok(id_token) => Ok(Some(id_token))
-        Err(e) => Err(e)
-      }
+      IdToken::parse(token_str)
+      .map(fn(id_token) { Some(id_token) })
+      .map_err(fn(e) {
+        @oauth2.OAuth2Error::new_other(
+          "ID Token parsing failed: \{e.message()}",
+        )
+      })
     None => Ok(None)
   }
 }
@@ -22,7 +25,12 @@ pub fn get_id_token_from_response(
   response : @oauth2.TokenResponse,
 ) -> Result[IdToken, @oauth2.OAuth2Error] {
   match response.id_token() {
-    Some(token_str) => IdToken::parse(token_str)
+    Some(token_str) =>
+      IdToken::parse(token_str).map_err(fn(e) {
+        @oauth2.OAuth2Error::new_other(
+          "ID Token parsing failed: \{e.message()}",
+        )
+      })
     None =>
       Err(@oauth2.OAuth2Error::new_other("ID Token not present in response"))
   }

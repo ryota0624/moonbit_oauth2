@@ -20,6 +20,26 @@ pub struct DiscoveryDocument {
 } derive(Show)
 
 ///|
+/// DiscoveryError represents errors that occur during Discovery Document parsing
+pub enum DiscoveryError {
+  InvalidJson(String) // JSON parsing failed
+  InvalidStructure(String) // Structure validation failed
+  InvalidFieldType(String) // Field has wrong type
+  MissingRequiredField(String) // Required field is missing
+} derive(Show, Eq)
+
+///|
+/// Convert DiscoveryError to string message
+pub fn DiscoveryError::message(self : DiscoveryError) -> String {
+  match self {
+    InvalidJson(msg) => "Failed to parse JSON: \{msg}"
+    InvalidStructure(msg) => "Invalid discovery document structure: \{msg}"
+    InvalidFieldType(msg) => "Invalid field type: \{msg}"
+    MissingRequiredField(msg) => "Missing required field: \{msg}"
+  }
+}
+
+///|
 /// Fetch Discovery Document from issuer URL
 ///
 /// Fetches the OpenID Connect Discovery Document from the well-known endpoint:
@@ -71,8 +91,12 @@ pub async fn fetch_discovery_document(
     )
   }
 
-  // Parse discovery document
-  parse_discovery_document(response.body)
+  // Parse discovery document and convert DiscoveryError to OAuth2Error
+  parse_discovery_document(response.body).map_err(fn(disc_err) {
+    @oauth2.OAuth2Error::new_other(
+      "Discovery document parsing failed: \{disc_err.message()}",
+    )
+  })
 }
 
 ///|
@@ -83,89 +107,45 @@ pub async fn fetch_discovery_document(
 ///
 /// # Returns
 /// * `Ok(DiscoveryDocument)` - Successfully parsed discovery document
-/// * `Err(OAuth2Error)` - Failed to parse or missing required fields
+/// * `Err(DiscoveryError)` - Failed to parse or missing required fields
 fn parse_discovery_document(
   json_str : String,
-) -> Result[DiscoveryDocument, @oauth2.OAuth2Error] {
+) -> Result[DiscoveryDocument, DiscoveryError] {
   // Parse JSON
   let json = @json.parse(json_str) catch {
-    e =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Failed to parse discovery document JSON: \{e}",
-        ),
-      )
+    e => return Err(InvalidJson(e.to_string()))
   }
 
   let obj = match json {
     Object(o) => o
     _ =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Discovery document must be a JSON object",
-        ),
-      )
+      return Err(InvalidStructure("Discovery document must be a JSON object"))
   }
 
   // Extract required fields
   let issuer = match obj.get("issuer") {
     Some(String(s)) => s
-    Some(_) =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Invalid 'issuer' in discovery document"),
-      )
-    None =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Missing 'issuer' in discovery document"),
-      )
+    Some(_) => return Err(InvalidFieldType("'issuer' must be a string"))
+    None => return Err(MissingRequiredField("'issuer'"))
   }
 
   let authorization_endpoint = match obj.get("authorization_endpoint") {
     Some(String(s)) => s
     Some(_) =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Invalid 'authorization_endpoint' in discovery document",
-        ),
-      )
-    None =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Missing 'authorization_endpoint' in discovery document",
-        ),
-      )
+      return Err(InvalidFieldType("'authorization_endpoint' must be a string"))
+    None => return Err(MissingRequiredField("'authorization_endpoint'"))
   }
 
   let token_endpoint = match obj.get("token_endpoint") {
     Some(String(s)) => s
-    Some(_) =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Invalid 'token_endpoint' in discovery document",
-        ),
-      )
-    None =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Missing 'token_endpoint' in discovery document",
-        ),
-      )
+    Some(_) => return Err(InvalidFieldType("'token_endpoint' must be a string"))
+    None => return Err(MissingRequiredField("'token_endpoint'"))
   }
 
   let jwks_uri = match obj.get("jwks_uri") {
     Some(String(s)) => s
-    Some(_) =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Invalid 'jwks_uri' in discovery document",
-        ),
-      )
-    None =>
-      return Err(
-        @oauth2.OAuth2Error::new_other(
-          "Missing 'jwks_uri' in discovery document",
-        ),
-      )
+    Some(_) => return Err(InvalidFieldType("'jwks_uri' must be a string"))
+    None => return Err(MissingRequiredField("'jwks_uri'"))
   }
 
   // Extract optional fields

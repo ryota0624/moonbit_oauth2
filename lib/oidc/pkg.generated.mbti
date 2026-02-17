@@ -47,6 +47,16 @@ pub fn DiscoveryDocument::userinfo_endpoint(Self) -> String?
 pub fn DiscoveryDocument::userinfo_url(Self) -> UserInfoUrl?
 pub impl Show for DiscoveryDocument
 
+pub enum DiscoveryError {
+  InvalidJson(String)
+  InvalidStructure(String)
+  InvalidFieldType(String)
+  MissingRequiredField(String)
+}
+pub fn DiscoveryError::message(Self) -> String
+pub impl Eq for DiscoveryError
+pub impl Show for DiscoveryError
+
 pub struct IdToken {
   raw : String
   header : JwtHeader
@@ -62,7 +72,7 @@ pub fn IdToken::issued_at(Self) -> Int64
 pub fn IdToken::issuer(Self) -> String
 pub fn IdToken::name(Self) -> String?
 pub fn IdToken::nonce(Self) -> String?
-pub fn IdToken::parse(String) -> Result[Self, @oauth2.OAuth2Error]
+pub fn IdToken::parse(String) -> Result[Self, IdTokenError]
 pub fn IdToken::raw(Self) -> String
 pub fn IdToken::subject(Self) -> String
 pub impl Show for IdToken
@@ -84,6 +94,18 @@ pub struct IdTokenClaims {
   locale : String?
 }
 pub impl Show for IdTokenClaims
+
+pub enum IdTokenError {
+  InvalidFormat(String)
+  Base64DecodeError(String)
+  InvalidJson(String)
+  InvalidStructure(String)
+  InvalidFieldType(String)
+  MissingRequiredField(String)
+}
+pub fn IdTokenError::message(Self) -> String
+pub impl Eq for IdTokenError
+pub impl Show for IdTokenError
 
 pub enum JWKError {
   InvalidJson(String)

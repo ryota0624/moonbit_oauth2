@@ -42,10 +42,32 @@ pub struct IdTokenClaims {
 } derive(Show)
 
 ///|
+/// IdTokenError represents errors that occur during ID Token parsing
+pub enum IdTokenError {
+  InvalidFormat(String) // JWT format validation failed
+  Base64DecodeError(String) // Base64URL decoding failed
+  InvalidJson(String) // JSON parsing failed
+  InvalidStructure(String) // Structure validation failed
+  InvalidFieldType(String) // Field has wrong type
+  MissingRequiredField(String) // Required field is missing
+} derive(Show, Eq)
+
+///|
+/// Convert IdTokenError to string message
+pub fn IdTokenError::message(self : IdTokenError) -> String {
+  match self {
+    InvalidFormat(msg) => "Invalid JWT format: \{msg}"
+    Base64DecodeError(msg) => "Base64 decode error: \{msg}"
+    InvalidJson(msg) => "Failed to parse JSON: \{msg}"
+    InvalidStructure(msg) => "Invalid structure: \{msg}"
+    InvalidFieldType(msg) => "Invalid field type: \{msg}"
+    MissingRequiredField(msg) => "Missing required field: \{msg}"
+  }
+}
+
+///|
 /// Parse an ID Token from a JWT string
-pub fn IdToken::parse(
-  token_string : String,
-) -> Result[IdToken, @oauth2.OAuth2Error] {
+pub fn IdToken::parse(token_string : String) -> Result[IdToken, IdTokenError] {
   // Split JWT into three parts: header.payload.signature
   let (header_b64, payload_b64, signature_b64) = match split_jwt(token_string) {
     Ok(parts) => parts
@@ -77,18 +99,12 @@ pub fn IdToken::parse(
 
 ///|
 /// Split JWT string into three parts (header, payload, signature)
-fn split_jwt(
-  jwt : String,
-) -> Result[(String, String, String), @oauth2.OAuth2Error] {
+fn split_jwt(jwt : String) -> Result[(String, String, String), IdTokenError] {
   let parts_iter = jwt.split(".")
   let parts = parts_iter.map(fn(sv) { sv.to_string() }).to_array()
 
   if parts.length() != 3 {
-    return Err(
-      @oauth2.OAuth2Error::new_other(
-        "Invalid JWT format: expected 3 parts separated by '.'",
-      ),
-    )
+    return Err(InvalidFormat("expected 3 parts separated by '.'"))
   }
 
   Ok((parts[0], parts[1], parts[2]))
@@ -96,7 +112,7 @@ fn split_jwt(
 
 ///|
 /// Decode Base64URL string
-fn base64url_decode(input : String) -> Result[String, @oauth2.OAuth2Error] {
+fn base64url_decode(input : String) -> Result[String, IdTokenError] {
   // Base64URL uses '-' and '_' instead of '+' and '/'
   // and doesn't use padding '='
   let normalized = input.replace(old="-", new="+").replace(old="_", new="/")
@@ -111,10 +127,7 @@ fn base64url_decode(input : String) -> Result[String, @oauth2.OAuth2Error] {
 
   // Decode using standard Base64
   let bytes = @base64.decode(padded) catch {
-    e =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Failed to decode Base64: \{e}"),
-      )
+    e => return Err(Base64DecodeError(e.to_string()))
   }
 
   // Convert bytes to UTF-8 string using encoding library
@@ -125,30 +138,20 @@ fn base64url_decode(input : String) -> Result[String, @oauth2.OAuth2Error] {
 
 ///|
 /// Parse JWT header from JSON string
-fn parse_jwt_header(
-  json_str : String,
-) -> Result[JwtHeader, @oauth2.OAuth2Error] {
+fn parse_jwt_header(json_str : String) -> Result[JwtHeader, IdTokenError] {
   let json = @json.parse(json_str) catch {
-    e =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Failed to parse JWT header JSON: \{e}"),
-      )
+    e => return Err(InvalidJson(e.to_string()))
   }
 
   let obj = match json {
     Object(o) => o
-    _ =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("JWT header must be a JSON object"),
-      )
+    _ => return Err(InvalidStructure("JWT header must be a JSON object"))
   }
 
   let alg = match obj.get("alg") {
     Some(String(s)) => s
-    Some(_) =>
-      return Err(@oauth2.OAuth2Error::new_other("Invalid 'alg' in JWT header"))
-    None =>
-      return Err(@oauth2.OAuth2Error::new_other("Missing 'alg' in JWT header"))
+    Some(_) => return Err(InvalidFieldType("'alg' must be a string"))
+    None => return Err(MissingRequiredField("'alg'"))
   }
 
   let typ = match obj.get("typ") {
@@ -166,61 +169,52 @@ fn parse_jwt_header(
 
 ///|
 /// Parse ID Token claims from JSON string
-fn parse_claims(
-  json_str : String,
-) -> Result[IdTokenClaims, @oauth2.OAuth2Error] {
+fn parse_claims(json_str : String) -> Result[IdTokenClaims, IdTokenError] {
   let json = @json.parse(json_str) catch {
-    e =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Failed to parse claims JSON: \{e}"),
-      )
+    e => return Err(InvalidJson(e.to_string()))
   }
 
   let obj = match json {
     Object(o) => o
-    _ =>
-      return Err(@oauth2.OAuth2Error::new_other("Claims must be a JSON object"))
+    _ => return Err(InvalidStructure("Claims must be a JSON object"))
   }
 
   // Required claims
   let iss = match obj.get("iss") {
     Some(String(s)) => s
-    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'iss' claim"))
-    None => return Err(@oauth2.OAuth2Error::new_other("Missing 'iss' claim"))
+    Some(_) => return Err(InvalidFieldType("'iss' must be a string"))
+    None => return Err(MissingRequiredField("'iss'"))
   }
 
   let sub = match obj.get("sub") {
     Some(String(s)) => s
-    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'sub' claim"))
-    None => return Err(@oauth2.OAuth2Error::new_other("Missing 'sub' claim"))
+    Some(_) => return Err(InvalidFieldType("'sub' must be a string"))
+    None => return Err(MissingRequiredField("'sub'"))
   }
 
   let aud = match obj.get("aud") {
     Some(String(s)) => s
     Some(Array(arr)) if arr.length() == 0 =>
-      return Err(@oauth2.OAuth2Error::new_other("Empty 'aud' array"))
+      return Err(InvalidStructure("'aud' array cannot be empty"))
     Some(Array(arr)) =>
       match arr[0] {
         String(s) => s
-        _ =>
-          return Err(
-            @oauth2.OAuth2Error::new_other("Invalid 'aud' claim in array"),
-          )
+        _ => return Err(InvalidFieldType("'aud' array must contain strings"))
       }
-    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'aud' claim"))
-    None => return Err(@oauth2.OAuth2Error::new_other("Missing 'aud' claim"))
+    Some(_) => return Err(InvalidFieldType("'aud' must be a string or array"))
+    None => return Err(MissingRequiredField("'aud'"))
   }
 
   let exp = match obj.get("exp") {
     Some(Number(n, ..)) => n.to_int64()
-    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'exp' claim"))
-    None => return Err(@oauth2.OAuth2Error::new_other("Missing 'exp' claim"))
+    Some(_) => return Err(InvalidFieldType("'exp' must be a number"))
+    None => return Err(MissingRequiredField("'exp'"))
   }
 
   let iat = match obj.get("iat") {
     Some(Number(n, ..)) => n.to_int64()
-    Some(_) => return Err(@oauth2.OAuth2Error::new_other("Invalid 'iat' claim"))
-    None => return Err(@oauth2.OAuth2Error::new_other("Missing 'iat' claim"))
+    Some(_) => return Err(InvalidFieldType("'iat' must be a number"))
+    None => return Err(MissingRequiredField("'iat'"))
   }
 
   // Optional claims
