@@ -1,0 +1,8 @@
+import {
+  "ryota0624/oauth2",
+  "ryota0624/oauth2/oidc",
+}
+
+options(
+  "is-main": false,
+)

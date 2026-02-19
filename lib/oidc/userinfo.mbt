@@ -1,6 +1,26 @@
 ///| UserInfo Endpoint Implementation
 
 ///|
+/// UserInfoError represents errors that occur during UserInfo operations
+pub enum UserInfoError {
+  HttpError(@oauth2.OAuth2Error) // HTTP/Network error
+  InvalidJson(String) // JSON parsing failed
+  InvalidStructure(String) // Invalid structure
+  MissingRequiredField(String) // Required field missing
+} derive(Show, Eq)
+
+///|
+/// Convert UserInfoError to string message
+pub fn UserInfoError::message(self : UserInfoError) -> String {
+  match self {
+    HttpError(err) => "HTTP error: \{err.message()}"
+    InvalidJson(msg) => "Failed to parse JSON: \{msg}"
+    InvalidStructure(msg) => "Invalid UserInfo structure: \{msg}"
+    MissingRequiredField(msg) => "Missing required field: \{msg}"
+  }
+}
+
+///|
 /// UserInfo represents user information from the UserInfo Endpoint
 pub struct UserInfo {
   sub : String // Required: User ID (must match ID Token's sub)
@@ -51,11 +71,11 @@ pub fn UserInfoRequest::new(
 
 ///|
 /// Execute the UserInfo request using HTTP client
-/// Returns UserInfo on success, OAuth2Error on failure
+/// Returns UserInfo on success, UserInfoError on failure
 pub async fn UserInfoRequest::execute(
   self : UserInfoRequest,
   http_client : @oauth2.OAuth2HttpClient,
-) -> Result[UserInfo, @oauth2.OAuth2Error] {
+) -> Result[UserInfo, UserInfoError] {
   // Set up headers with Bearer token
   let headers : @oauth2.HttpHeaders = {}
   headers["Authorization"] = "Bearer \{self.access_token.to_string()}"
@@ -64,14 +84,14 @@ pub async fn UserInfoRequest::execute(
   // Send GET request
   let response = match http_client.get(self.userinfo_url.to_string(), headers) {
     Ok(resp) => resp
-    Err(err) => return Err(err)
+    Err(err) => return Err(HttpError(err))
   }
 
   // Check if response is successful (2xx status code)
   if response.is_error() {
     // Parse OAuth2 error from response body
     let error = @oauth2.parse_oauth2_error(response.body)
-    return Err(error)
+    return Err(HttpError(error))
   }
 
   // Parse UserInfo response
@@ -80,22 +100,14 @@ pub async fn UserInfoRequest::execute(
 
 ///|
 /// Parse UserInfo from JSON string
-pub fn parse_userinfo(
-  json_str : String,
-) -> Result[UserInfo, @oauth2.OAuth2Error] {
+pub fn parse_userinfo(json_str : String) -> Result[UserInfo, UserInfoError] {
   let json = @json.parse(json_str) catch {
-    e =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("Failed to parse UserInfo JSON: \{e}"),
-      )
+    e => return Err(InvalidJson("Failed to parse UserInfo JSON: \{e}"))
   }
 
   let obj = match json {
     Object(o) => o
-    _ =>
-      return Err(
-        @oauth2.OAuth2Error::new_other("UserInfo must be a JSON object"),
-      )
+    _ => return Err(InvalidStructure("UserInfo must be a JSON object"))
   }
 
   // Required field: sub
@@ -103,13 +115,9 @@ pub fn parse_userinfo(
     Some(json_val) =>
       match json_val {
         String(s) => s
-        _ =>
-          return Err(
-            @oauth2.OAuth2Error::new_other("Invalid 'sub' in UserInfo"),
-          )
+        _ => return Err(InvalidStructure("Invalid 'sub' in UserInfo"))
       }
-    None =>
-      return Err(@oauth2.OAuth2Error::new_other("Missing 'sub' in UserInfo"))
+    None => return Err(MissingRequiredField("'sub'"))
   }
 
   // Optional fields

@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "ryota0624/oauth2/oauth2"
+package "ryota0624/oauth2"
 
 // Values
 pub fn base64url_encode(String) -> String
@@ -132,12 +132,10 @@ pub enum OAuth2Error {
   TemporarilyUnavailable(String)
   HttpError(String)
   ParseError(String)
-  Other(String)
 }
 pub fn OAuth2Error::from_error_code(String, String?) -> Self
 pub fn OAuth2Error::message(Self) -> String
 pub fn OAuth2Error::new_http_error(String) -> Self
-pub fn OAuth2Error::new_other(String) -> Self
 pub fn OAuth2Error::new_parse_error(String) -> Self
 pub impl Eq for OAuth2Error
 pub impl Show for OAuth2Error

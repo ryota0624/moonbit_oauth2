@@ -14,6 +14,8 @@ OAuth2 client library for MoonBit with support for Native and JS targets.
 - ✅ **Client Credentials Flow** (Machine-to-Machine)
 - ✅ **Password Grant Flow** (Resource Owner Password Credentials)
 - ✅ **Refresh Token** support
+- ✅ **OpenID Connect (OIDC)** support with ID Token verification
+- ✅ **Google OAuth2** integration with discovery document and JWKS
 - ✅ **CSRF protection** with secure token generation
 - ✅ **Cryptographically secure random** number generation (Chacha8 CSPRNG)
 - ✅ **Type-safe** API with proper error handling
@@ -105,6 +107,60 @@ let http_client = @oauth2.OAuth2HttpClient::new()
 let result = token_request.execute(http_client)
 ```
 
+### Google OAuth2 Integration
+
+```moonbit
+let http_client = @oauth2.OAuth2HttpClient::new()
+let client_id = "your-client-id.apps.googleusercontent.com"
+let client_secret = "your-client-secret"
+let redirect_uri = "http://localhost:3000/callback"
+
+// 1. Fetch Google Discovery Document
+let discovery = @providers.google.fetch_discovery(http_client)?
+
+// 2. Generate authorization URL with PKCE
+let state = @oauth2.generate_csrf_token()
+let pkce_verifier = @oauth2.PkceCodeVerifier::new_random()
+let pkce_challenge = @oauth2.PkceCodeChallenge::from_verifier_s256(pkce_verifier)
+
+let auth_request = @oauth2.AuthorizationRequest::new_with_pkce(
+  discovery.authorization_url(),
+  @oauth2.ClientId::new(client_id),
+  @oauth2.RedirectUrl::new(redirect_uri),
+  [
+    @oauth2.Scope::new("openid"),
+    @oauth2.Scope::new("email"),
+    @oauth2.Scope::new("profile"),
+  ],
+  state,
+  pkce_challenge,
+)
+
+let auth_url = auth_request.build_authorization_url()
+// Redirect user to auth_url
+
+// 3. Exchange authorization code for tokens
+let token_request = @oauth2.TokenRequest::new_with_pkce(
+  discovery.token_url(),
+  @oauth2.ClientId::new(client_id),
+  @oauth2.ClientSecret::new(client_secret),
+  authorization_code,
+  @oauth2.RedirectUrl::new(redirect_uri),
+  pkce_verifier,
+)
+
+let token_response = token_request.execute(http_client)?
+
+// 4. Verify ID Token
+let id_token = @oidc.get_id_token_from_response(token_response)?
+@providers.google.verify_id_token(id_token, client_id, http_client, None)?
+
+println("User ID: \{id_token.subject()}")
+println("Email: \{id_token.email().or(\"N/A\")}")
+```
+
+See [Google OAuth2 Integration Guide](examples/google/README.md) for detailed instructions.
+
 ## Testing
 
 ### Unit Tests
@@ -148,6 +204,9 @@ See [`.github/workflows/test.yml`](.github/workflows/test.yml) for details.
 
 ## Documentation
 
+- [Google OAuth2 Integration Guide](examples/google/README.md) - Complete guide for Google Sign-In
+- [Google Provider API Reference](lib/providers/google/README.md) - API documentation
+- [OIDC Library Documentation](lib/oidc/README.md) - OpenID Connect implementation
 - [Keycloak Verification Guide](docs/testing/keycloak_verification_guide.md) - Comprehensive testing guide
 - [CLAUDE.md](CLAUDE.md) - Development guidelines
 - [Todo.md](Todo.md) - Implementation roadmap
@@ -162,6 +221,16 @@ See [`.github/workflows/test.yml`](.github/workflows/test.yml) for details.
   - `token_request.mbt` - Token exchange
   - `pkce.mbt` - PKCE implementation
   - `http_client.mbt` - HTTP client abstraction
+
+- **lib/oidc/** - OpenID Connect support
+  - `discovery.mbt` - Discovery Document (RFC 8414)
+  - `jwks.mbt` - JSON Web Key Set (RFC 7517)
+  - `id_token.mbt` - ID Token parsing and verification
+  - `userinfo.mbt` - UserInfo endpoint support
+
+- **lib/providers/google/** - Google OAuth2 provider
+  - `google_oauth2.mbt` - Google-specific helpers
+  - See [Google Provider API](lib/providers/google/README.md)
 
 - **lib/keycloak_test/** - Integration test suite
   - Tests all OAuth2 flows with real Keycloak server

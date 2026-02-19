@@ -2,19 +2,57 @@
 package "ryota0624/oauth2/oidc"
 
 import {
-  "ryota0624/oauth2/oauth2",
+  "ryota0624/oauth2",
 }
 
 // Values
-pub fn get_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken, @oauth2.OAuth2Error]
+pub async fn fetch_discovery_document(String, @oauth2.OAuth2HttpClient) -> Result[DiscoveryDocument, DiscoveryError]
 
-pub fn parse_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken?, @oauth2.OAuth2Error]
+pub async fn fetch_jwks(String, @oauth2.OAuth2HttpClient) -> Result[JsonWebKeySet, JWKError]
 
-pub fn parse_userinfo(String) -> Result[UserInfo, @oauth2.OAuth2Error]
+pub fn get_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken, IdTokenError]
+
+pub fn parse_id_token_from_response(@oauth2.TokenResponse) -> Result[IdToken?, IdTokenError]
+
+pub fn parse_userinfo(String) -> Result[UserInfo, UserInfoError]
 
 // Errors
 
 // Types and methods
+pub struct DiscoveryDocument {
+  issuer : String
+  authorization_endpoint : String
+  token_endpoint : String
+  jwks_uri : String
+  userinfo_endpoint : String?
+  scopes_supported : Array[String]?
+  response_types_supported : Array[String]?
+  revocation_endpoint : String?
+  introspection_endpoint : String?
+  code_challenge_methods_supported : Array[String]?
+}
+pub fn DiscoveryDocument::authorization_endpoint(Self) -> String
+pub fn DiscoveryDocument::authorization_url(Self) -> @oauth2.AuthUrl
+pub fn DiscoveryDocument::issuer(Self) -> String
+pub fn DiscoveryDocument::jwks_uri(Self) -> String
+pub fn DiscoveryDocument::response_types_supported(Self) -> Array[String]?
+pub fn DiscoveryDocument::scopes_supported(Self) -> Array[String]?
+pub fn DiscoveryDocument::token_endpoint(Self) -> String
+pub fn DiscoveryDocument::token_url(Self) -> @oauth2.TokenUrl
+pub fn DiscoveryDocument::userinfo_endpoint(Self) -> String?
+pub fn DiscoveryDocument::userinfo_url(Self) -> UserInfoUrl?
+pub impl Show for DiscoveryDocument
+
+pub enum DiscoveryError {
+  InvalidJson(String)
+  InvalidStructure(String)
+  InvalidFieldType(String)
+  MissingRequiredField(String)
+}
+pub fn DiscoveryError::message(Self) -> String
+pub impl Eq for DiscoveryError
+pub impl Show for DiscoveryError
+
 pub struct IdToken {
   raw : String
   header : JwtHeader
@@ -30,9 +68,12 @@ pub fn IdToken::issued_at(Self) -> Int64
 pub fn IdToken::issuer(Self) -> String
 pub fn IdToken::name(Self) -> String?
 pub fn IdToken::nonce(Self) -> String?
-pub fn IdToken::parse(String) -> Result[Self, @oauth2.OAuth2Error]
+pub fn IdToken::parse(String) -> Result[Self, IdTokenError]
 pub fn IdToken::raw(Self) -> String
 pub fn IdToken::subject(Self) -> String
+pub fn IdToken::verify(Self, JsonWebKeySet, String, String, Int64, String?) -> Result[Unit, VerificationError]
+pub fn IdToken::verify_claims(Self, String, String, Int64, String?) -> Result[Unit, VerificationError]
+pub fn IdToken::verify_signature(Self, JsonWebKeySet) -> Result[Unit, VerificationError]
 pub impl Show for IdToken
 
 pub struct IdTokenClaims {
@@ -52,6 +93,58 @@ pub struct IdTokenClaims {
   locale : String?
 }
 pub impl Show for IdTokenClaims
+
+pub enum IdTokenError {
+  InvalidFormat(String)
+  Base64DecodeError(String)
+  InvalidJson(String)
+  InvalidStructure(String)
+  InvalidFieldType(String)
+  MissingRequiredField(String)
+  MissingIdToken
+}
+pub fn IdTokenError::message(Self) -> String
+pub impl Eq for IdTokenError
+pub impl Show for IdTokenError
+
+pub enum JWKError {
+  InvalidJson(String)
+  InvalidStructure(String)
+  InvalidFieldType(String)
+  MissingRequiredField(String)
+  NoValidKeys
+}
+pub fn JWKError::message(Self) -> String
+pub impl Eq for JWKError
+pub impl Show for JWKError
+
+pub struct JsonWebKey {
+  kty : String
+  use_ : String?
+  kid : String
+  alg : String?
+  n : String?
+  e : String?
+}
+pub fn JsonWebKey::alg(Self) -> String?
+pub fn JsonWebKey::is_ec(Self) -> Bool
+pub fn JsonWebKey::is_rsa(Self) -> Bool
+pub fn JsonWebKey::kid(Self) -> String
+pub fn JsonWebKey::kty(Self) -> String
+pub fn JsonWebKey::rsa_exponent(Self) -> String?
+pub fn JsonWebKey::rsa_modulus(Self) -> String?
+pub fn JsonWebKey::use_(Self) -> String?
+pub impl Eq for JsonWebKey
+pub impl Show for JsonWebKey
+
+pub struct JsonWebKeySet {
+  keys : Array[JsonWebKey]
+}
+pub fn JsonWebKeySet::find_by_kid(Self, String) -> JsonWebKey?
+pub fn JsonWebKeySet::find_rsa_key_by_kid(Self, String) -> JsonWebKey?
+pub fn JsonWebKeySet::get_all_keys(Self) -> Array[JsonWebKey]
+pub impl Eq for JsonWebKeySet
+pub impl Show for JsonWebKeySet
 
 pub struct JwtHeader {
   alg : String
@@ -85,11 +178,21 @@ pub fn UserInfo::subject(Self) -> String
 pub fn UserInfo::updated_at(Self) -> Int64?
 pub impl Show for UserInfo
 
+pub enum UserInfoError {
+  HttpError(@oauth2.OAuth2Error)
+  InvalidJson(String)
+  InvalidStructure(String)
+  MissingRequiredField(String)
+}
+pub fn UserInfoError::message(Self) -> String
+pub impl Eq for UserInfoError
+pub impl Show for UserInfoError
+
 pub struct UserInfoRequest {
   userinfo_url : UserInfoUrl
   access_token : @oauth2.AccessToken
 }
-pub async fn UserInfoRequest::execute(Self, @oauth2.OAuth2HttpClient) -> Result[UserInfo, @oauth2.OAuth2Error]
+pub async fn UserInfoRequest::execute(Self, @oauth2.OAuth2HttpClient) -> Result[UserInfo, UserInfoError]
 pub fn UserInfoRequest::new(UserInfoUrl, @oauth2.AccessToken) -> Self
 pub impl Show for UserInfoRequest
 
@@ -100,6 +203,18 @@ pub fn UserInfoUrl::new(String) -> Self
 pub fn UserInfoUrl::to_string(Self) -> String
 pub impl Eq for UserInfoUrl
 pub impl Show for UserInfoUrl
+
+pub enum VerificationError {
+  TokenExpired(Int64, Int64)
+  InvalidAudience(String, String)
+  InvalidIssuer(String, String)
+  InvalidNonce(String, String)
+  MissingNonce
+  SignatureVerificationNotImplemented
+}
+pub fn VerificationError::message(Self) -> String
+pub impl Eq for VerificationError
+pub impl Show for VerificationError
 
 // Type aliases
 

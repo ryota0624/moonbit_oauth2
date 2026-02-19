@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "ryota0624/oauth2/providers/google"
+
+import {
+  "ryota0624/oauth2",
+  "ryota0624/oauth2/oidc",
+}
+
+// Values
+pub async fn fetch_discovery(@oauth2.OAuth2HttpClient) -> Result[@oidc.DiscoveryDocument, GoogleOAuth2Error]
+
+pub fn google_issuer() -> String
+
+pub async fn verify_id_token(@oidc.IdToken, String, @oauth2.OAuth2HttpClient, String?) -> Result[Unit, GoogleOAuth2Error]
+
+// Errors
+
+// Types and methods
+pub enum GoogleOAuth2Error {
+  DiscoveryFailed(@oidc.DiscoveryError)
+  JwksFailed(@oidc.JWKError)
+  VerificationFailed(@oidc.VerificationError)
+}
+pub fn GoogleOAuth2Error::message(Self) -> String
+pub impl Eq for GoogleOAuth2Error
+pub impl Show for GoogleOAuth2Error
+
+// Type aliases
+
+// Traits
+
