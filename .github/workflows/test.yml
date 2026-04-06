@@ -66,7 +66,7 @@ jobs:
         run: moon update
 
       - name: Build for JS target
-        run: moon build --target js lib/keycloak_test
+        run: moon build --target js cmd/keycloak_test
 
       - name: Start Keycloak and PostgreSQL
         run: docker compose up -d keycloak postgres
@@ -120,7 +120,7 @@ jobs:
           CLIENT_ID: test-client
           TEST_USERNAME: testuser
           TEST_PASSWORD: testpass123
-        run: moon run --target js lib/keycloak_test
+        run: moon run --target js cmd/keycloak_test
 
       - name: Show Keycloak logs on failure
         if: failure()
