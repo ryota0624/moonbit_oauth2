@@ -120,7 +120,7 @@ jobs:
           CLIENT_ID: test-client
           TEST_USERNAME: testuser
           TEST_PASSWORD: testpass123
-        run: cd cmd/keycloak_test && moon run --target js
+        run: cd cmd/keycloak_test && moon run --target js .
 
       - name: Show Keycloak logs on failure
         if: failure()
