@@ -25,17 +25,13 @@ pub fn url_encode(String) -> String
 // Errors
 
 // Types and methods
-type AccessToken
+type AccessToken derive(Eq, Show)
 pub fn AccessToken::new(String) -> Self
 pub fn AccessToken::to_string(Self) -> String
-pub impl Eq for AccessToken
-pub impl Show for AccessToken
 
-type AuthUrl
+type AuthUrl derive(Eq, Show)
 pub fn AuthUrl::new(String) -> Self
 pub fn AuthUrl::to_string(Self) -> String
-pub impl Eq for AuthUrl
-pub impl Show for AuthUrl
 
 pub struct AuthorizationRequest {
   auth_url : AuthUrl
@@ -46,12 +42,11 @@ pub struct AuthorizationRequest {
   response_type : String
   pkce_challenge : PkceCodeChallenge?
   nonce : Nonce?
-}
+} derive(Show)
 pub fn AuthorizationRequest::build_authorization_url(Self) -> String
 pub fn AuthorizationRequest::new(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken) -> Self
 pub fn AuthorizationRequest::new_with_pkce(AuthUrl, ClientId, RedirectUrl, Array[Scope], CsrfToken, PkceCodeChallenge) -> Self
 pub fn AuthorizationRequest::with_nonce(Self, Nonce) -> Self
-pub impl Show for AuthorizationRequest
 
 pub struct ClientCredentialsRequest {
   token_url : TokenUrl
@@ -59,65 +54,52 @@ pub struct ClientCredentialsRequest {
   client_secret : ClientSecret
   scope : Array[Scope]
   grant_type : String
-}
+} derive(Show)
 pub fn ClientCredentialsRequest::build_request_body(Self) -> String
 pub async fn ClientCredentialsRequest::execute(Self, OAuth2HttpClient) -> Result[TokenResponse, OAuth2Error]
 pub fn ClientCredentialsRequest::get_auth_header(Self) -> String
 pub fn ClientCredentialsRequest::new(TokenUrl, ClientId, ClientSecret, Array[Scope]) -> Self
-pub impl Show for ClientCredentialsRequest
 
-type ClientId
+type ClientId derive(Eq, Show)
 pub fn ClientId::new(String) -> Self
 pub fn ClientId::to_string(Self) -> String
-pub impl Eq for ClientId
-pub impl Show for ClientId
 
-type ClientSecret
+type ClientSecret derive(Eq, Show)
 pub fn ClientSecret::new(String) -> Self
 pub fn ClientSecret::to_string(Self) -> String
-pub impl Eq for ClientSecret
-pub impl Show for ClientSecret
 
-type CsrfToken
+type CsrfToken derive(Eq, Show)
 pub fn CsrfToken::new(String) -> Self
 pub fn CsrfToken::to_string(Self) -> String
-pub impl Eq for CsrfToken
-pub impl Show for CsrfToken
 
 pub(all) enum HttpMethod {
   GET
   POST
   PUT
   DELETE
-}
+} derive(Eq, Show)
 pub fn HttpMethod::to_string(Self) -> String
-pub impl Eq for HttpMethod
-pub impl Show for HttpMethod
 
 pub struct HttpRequest {
   url : String
   http_method : HttpMethod
   headers : Map[String, String]
   body : String
-}
+} derive(Show)
 pub fn HttpRequest::new(String, HttpMethod, Map[String, String], String) -> Self
-pub impl Show for HttpRequest
 
 pub struct HttpResponse {
   status_code : Int
   headers : Map[String, String]
   body : String
-}
+} derive(Show)
 pub fn HttpResponse::is_error(Self) -> Bool
 pub fn HttpResponse::is_success(Self) -> Bool
 pub fn HttpResponse::new(Int, Map[String, String], String) -> Self
-pub impl Show for HttpResponse
 
-type Nonce
+type Nonce derive(Eq, Show)
 pub fn Nonce::new(String) -> Self
 pub fn Nonce::to_string(Self) -> String
-pub impl Eq for Nonce
-pub impl Show for Nonce
 
 pub enum OAuth2Error {
   InvalidRequest(String)
@@ -132,13 +114,11 @@ pub enum OAuth2Error {
   TemporarilyUnavailable(String)
   HttpError(String)
   ParseError(String)
-}
+} derive(Eq, Show)
 pub fn OAuth2Error::from_error_code(String, String?) -> Self
 pub fn OAuth2Error::message(Self) -> String
 pub fn OAuth2Error::new_http_error(String) -> Self
 pub fn OAuth2Error::new_parse_error(String) -> Self
-pub impl Eq for OAuth2Error
-pub impl Show for OAuth2Error
 
 pub struct OAuth2HttpClient {
   config : OAuth2HttpClientConfig
@@ -172,53 +152,42 @@ pub struct PasswordRequest {
   password : String
   scope : Array[Scope]
   grant_type : String
-}
+} derive(Show)
 pub fn PasswordRequest::build_request_body(Self) -> String
 pub async fn PasswordRequest::execute(Self, OAuth2HttpClient) -> Result[TokenResponse, OAuth2Error]
 pub fn PasswordRequest::get_auth_header(Self) -> String?
 pub fn PasswordRequest::new(TokenUrl, ClientId, ClientSecret?, String, String, Array[Scope]) -> Self
-pub impl Show for PasswordRequest
 
 pub struct PkceCodeChallenge {
   value : String
   challenge_method : PkceCodeChallengeMethod
-}
+} derive(Eq, Show)
 pub fn PkceCodeChallenge::from_verifier_plain(PkceCodeVerifier) -> Self
 pub fn PkceCodeChallenge::from_verifier_s256(PkceCodeVerifier) -> Self
 pub fn PkceCodeChallenge::method_string(Self) -> String
 pub fn PkceCodeChallenge::to_string(Self) -> String
-pub impl Eq for PkceCodeChallenge
-pub impl Show for PkceCodeChallenge
 
 pub enum PkceCodeChallengeMethod {
   Plain
   S256
-}
-pub impl Eq for PkceCodeChallengeMethod
-pub impl Show for PkceCodeChallengeMethod
+} derive(Eq, Show)
 
 pub struct PkceCodeVerifier {
   value : String
-}
+} derive(Eq, Show)
 pub fn PkceCodeVerifier::new(String) -> Self
 pub fn PkceCodeVerifier::new_random() -> Self
 pub fn PkceCodeVerifier::to_string(Self) -> String
-pub impl Eq for PkceCodeVerifier
-pub impl Show for PkceCodeVerifier
 
-type RedirectUrl
+type RedirectUrl derive(Eq, Show)
 pub fn RedirectUrl::new(String) -> Self
 pub fn RedirectUrl::to_string(Self) -> String
-pub impl Eq for RedirectUrl
-pub impl Show for RedirectUrl
 
-type RefreshToken
+type RefreshToken derive(Eq, Show)
 pub fn RefreshToken::new(String) -> Self
 pub fn RefreshToken::to_string(Self) -> String
-pub impl Eq for RefreshToken
-pub impl Show for RefreshToken
 
-type Scope
+type Scope derive(Eq, Show)
 pub fn Scope::address() -> Self
 pub fn Scope::email() -> Self
 pub fn Scope::new(String) -> Self
@@ -226,8 +195,6 @@ pub fn Scope::openid() -> Self
 pub fn Scope::phone() -> Self
 pub fn Scope::profile() -> Self
 pub fn Scope::to_string(Self) -> String
-pub impl Eq for Scope
-pub impl Show for Scope
 
 pub struct TokenRequest {
   token_url : TokenUrl
@@ -237,13 +204,12 @@ pub struct TokenRequest {
   redirect_uri : RedirectUrl
   grant_type : String
   pkce_verifier : PkceCodeVerifier?
-}
+} derive(Show)
 pub fn TokenRequest::build_request_body(Self) -> String
 pub async fn TokenRequest::execute(Self, OAuth2HttpClient) -> Result[TokenResponse, OAuth2Error]
 pub fn TokenRequest::get_auth_header(Self) -> String
 pub fn TokenRequest::new(TokenUrl, ClientId, ClientSecret, String, RedirectUrl) -> Self
 pub fn TokenRequest::new_with_pkce(TokenUrl, ClientId, ClientSecret, String, RedirectUrl, PkceCodeVerifier) -> Self
-pub impl Show for TokenRequest
 
 pub struct TokenResponse {
   access_token : AccessToken
@@ -252,7 +218,7 @@ pub struct TokenResponse {
   refresh_token : RefreshToken?
   scope : String?
   id_token : String?
-}
+} derive(Show)
 pub fn TokenResponse::access_token(Self) -> AccessToken
 pub fn TokenResponse::expires_in(Self) -> Int?
 pub fn TokenResponse::id_token(Self) -> String?
@@ -260,13 +226,10 @@ pub fn TokenResponse::new(AccessToken, String, Int?, RefreshToken?, String?, Str
 pub fn TokenResponse::refresh_token(Self) -> RefreshToken?
 pub fn TokenResponse::scope(Self) -> String?
 pub fn TokenResponse::token_type(Self) -> String
-pub impl Show for TokenResponse
 
-type TokenUrl
+type TokenUrl derive(Eq, Show)
 pub fn TokenUrl::new(String) -> Self
 pub fn TokenUrl::to_string(Self) -> String
-pub impl Eq for TokenUrl
-pub impl Show for TokenUrl
 
 // Type aliases
 pub type HttpHeaders = Map[String, String]
