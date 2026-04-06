@@ -20,10 +20,8 @@ pub enum GoogleOAuth2Error {
   DiscoveryFailed(@oidc.DiscoveryError)
   JwksFailed(@oidc.JWKError)
   VerificationFailed(@oidc.VerificationError)
-}
+} derive(Eq, Show)
 pub fn GoogleOAuth2Error::message(Self) -> String
-pub impl Eq for GoogleOAuth2Error
-pub impl Show for GoogleOAuth2Error
 
 // Type aliases
 

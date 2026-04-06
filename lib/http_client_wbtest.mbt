@@ -246,3 +246,280 @@ test "base64url_encode - PKCE code_verifier example" {
   // Should have reasonable length
   assert_true(result.length() > 0)
 }
+
+///|
+/// Tests for OAuth2HttpClientConfig
+test "OAuth2HttpClientConfig::default creates correct config" {
+  let config = OAuth2HttpClientConfig::default()
+
+  assert_eq(config.max_retries, 3)
+  assert_eq(config.base_delay_ms, 1000)
+  assert_eq(config.custom_headers, None)
+  assert_eq(config.user_agent, None)
+  assert_eq(config.debug, false)
+}
+
+///|
+test "OAuth2HttpClientConfig::builder creates default config" {
+  let config = OAuth2HttpClientConfig::builder()
+
+  assert_eq(config.max_retries, 3)
+  assert_eq(config.base_delay_ms, 1000)
+  assert_eq(config.custom_headers, None)
+  assert_eq(config.user_agent, None)
+  assert_eq(config.debug, false)
+}
+
+///|
+test "OAuth2HttpClientConfig::with_max_retries updates max_retries" {
+  let config = OAuth2HttpClientConfig::builder().with_max_retries(5)
+
+  assert_eq(config.max_retries, 5)
+  assert_eq(config.base_delay_ms, 1000) // Other fields unchanged
+}
+
+///|
+test "OAuth2HttpClientConfig::with_base_delay_ms updates base_delay_ms" {
+  let config = OAuth2HttpClientConfig::builder().with_base_delay_ms(2000)
+
+  assert_eq(config.max_retries, 3) // Other fields unchanged
+  assert_eq(config.base_delay_ms, 2000)
+}
+
+///|
+test "OAuth2HttpClientConfig::with_custom_headers updates custom_headers" {
+  let headers : HttpHeaders = {}
+  headers["X-Custom-Header"] = "value"
+
+  let config = OAuth2HttpClientConfig::builder().with_custom_headers(headers)
+
+  match config.custom_headers {
+    Some(h) => assert_eq(h["X-Custom-Header"], "value")
+    None => fail("Expected Some(headers)")
+  }
+}
+
+///|
+test "OAuth2HttpClientConfig::with_user_agent updates user_agent" {
+  let config = OAuth2HttpClientConfig::builder().with_user_agent("MyApp/1.0")
+
+  match config.user_agent {
+    Some(ua) => assert_eq(ua, "MyApp/1.0")
+    None => fail("Expected Some(user_agent)")
+  }
+}
+
+///|
+test "OAuth2HttpClientConfig::with_debug updates debug" {
+  let config = OAuth2HttpClientConfig::builder().with_debug(true)
+
+  assert_eq(config.debug, true)
+}
+
+///|
+test "OAuth2HttpClientConfig builder chain" {
+  let headers : HttpHeaders = {}
+  headers["Authorization"] = "Bearer token"
+
+  let config = OAuth2HttpClientConfig::builder()
+    .with_max_retries(5)
+    .with_base_delay_ms(500)
+    .with_custom_headers(headers)
+    .with_user_agent("MyApp/1.0")
+    .with_debug(true)
+
+  assert_eq(config.max_retries, 5)
+  assert_eq(config.base_delay_ms, 500)
+  assert_eq(config.debug, true)
+
+  match config.custom_headers {
+    Some(h) => assert_eq(h["Authorization"], "Bearer token")
+    None => fail("Expected Some(headers)")
+  }
+
+  match config.user_agent {
+    Some(ua) => assert_eq(ua, "MyApp/1.0")
+    None => fail("Expected Some(user_agent)")
+  }
+}
+
+///|
+test "OAuth2HttpClient::new creates client with default config" {
+  let client = OAuth2HttpClient::new()
+
+  assert_eq(client.config.max_retries, 3)
+  assert_eq(client.config.base_delay_ms, 1000)
+  assert_eq(client.config.debug, false)
+}
+
+///|
+test "OAuth2HttpClient::new_with_config creates client with custom config" {
+  let config = OAuth2HttpClientConfig::builder()
+    .with_max_retries(5)
+    .with_debug(true)
+
+  let client = OAuth2HttpClient::new_with_config(config)
+
+  assert_eq(client.config.max_retries, 5)
+  assert_eq(client.config.debug, true)
+}
+
+///|
+test "OAuth2HttpClient::new_with_debug creates client with debug enabled" {
+  let client = OAuth2HttpClient::new_with_debug(true)
+
+  assert_eq(client.config.debug, true)
+  assert_eq(client.config.max_retries, 3) // Other fields are default
+}
+
+///|
+/// Tests for merge_headers
+test "merge_headers with no custom headers" {
+  let base : HttpHeaders = {}
+  base["Content-Type"] = "application/json"
+
+  let result = merge_headers(base, None, None)
+
+  assert_eq(result["Content-Type"], "application/json")
+  assert_eq(result.length(), 1)
+}
+
+///|
+test "merge_headers with custom headers" {
+  let base : HttpHeaders = {}
+  base["Content-Type"] = "application/json"
+
+  let custom : HttpHeaders = {}
+  custom["X-Custom-Header"] = "custom-value"
+
+  let result = merge_headers(base, Some(custom), None)
+
+  assert_eq(result["Content-Type"], "application/json")
+  assert_eq(result["X-Custom-Header"], "custom-value")
+  assert_eq(result.length(), 2)
+}
+
+///|
+test "merge_headers with user agent" {
+  let base : HttpHeaders = {}
+  base["Content-Type"] = "application/json"
+
+  let result = merge_headers(base, None, Some("MyApp/1.0"))
+
+  assert_eq(result["Content-Type"], "application/json")
+  assert_eq(result["User-Agent"], "MyApp/1.0")
+  assert_eq(result.length(), 2)
+}
+
+///|
+test "merge_headers base headers override custom headers" {
+  let base : HttpHeaders = {}
+  base["X-Header"] = "base-value"
+
+  let custom : HttpHeaders = {}
+  custom["X-Header"] = "custom-value"
+
+  let result = merge_headers(base, Some(custom), None)
+
+  // Base headers should override custom headers
+  assert_eq(result["X-Header"], "base-value")
+  assert_eq(result.length(), 1)
+}
+
+///|
+test "merge_headers base headers override user agent" {
+  let base : HttpHeaders = {}
+  base["User-Agent"] = "BaseApp/1.0"
+
+  let result = merge_headers(base, None, Some("CustomApp/1.0"))
+
+  // Base headers should override user agent
+  assert_eq(result["User-Agent"], "BaseApp/1.0")
+  assert_eq(result.length(), 1)
+}
+
+///|
+test "merge_headers with all parameters" {
+  let base : HttpHeaders = {}
+  base["Content-Type"] = "application/json"
+  base["Authorization"] = "Bearer token"
+
+  let custom : HttpHeaders = {}
+  custom["X-Custom-Header"] = "custom-value"
+  custom["X-Another-Header"] = "another-value"
+
+  let result = merge_headers(base, Some(custom), Some("MyApp/1.0"))
+
+  assert_eq(result["Content-Type"], "application/json")
+  assert_eq(result["Authorization"], "Bearer token")
+  assert_eq(result["X-Custom-Header"], "custom-value")
+  assert_eq(result["X-Another-Header"], "another-value")
+  assert_eq(result["User-Agent"], "MyApp/1.0")
+  assert_eq(result.length(), 5)
+}
+
+///|
+/// Tests for retry logic
+test "calculate_backoff with retry_count=0" {
+  let backoff = calculate_backoff(0, 1000)
+  assert_eq(backoff, 1000) // 1000 * 2^0 = 1000
+}
+
+///|
+test "calculate_backoff with retry_count=1" {
+  let backoff = calculate_backoff(1, 1000)
+  assert_eq(backoff, 2000) // 1000 * 2^1 = 2000
+}
+
+///|
+test "calculate_backoff with retry_count=2" {
+  let backoff = calculate_backoff(2, 1000)
+  assert_eq(backoff, 4000) // 1000 * 2^2 = 4000
+}
+
+///|
+test "calculate_backoff with retry_count=3" {
+  let backoff = calculate_backoff(3, 1000)
+  assert_eq(backoff, 8000) // 1000 * 2^3 = 8000
+}
+
+///|
+test "calculate_backoff with different base_delay" {
+  let backoff = calculate_backoff(2, 500)
+  assert_eq(backoff, 2000) // 500 * 2^2 = 2000
+}
+
+///|
+test "is_retryable_status 500 is retryable" {
+  assert_true(is_retryable_status(500))
+}
+
+///|
+test "is_retryable_status 503 is retryable" {
+  assert_true(is_retryable_status(503))
+}
+
+///|
+test "is_retryable_status 599 is retryable" {
+  assert_true(is_retryable_status(599))
+}
+
+///|
+test "is_retryable_status 400 is not retryable" {
+  assert_false(is_retryable_status(400))
+}
+
+///|
+test "is_retryable_status 404 is not retryable" {
+  assert_false(is_retryable_status(404))
+}
+
+///|
+test "is_retryable_status 200 is not retryable" {
+  assert_false(is_retryable_status(200))
+}
+
+///|
+test "is_retryable_status 600 is not retryable" {
+  assert_false(is_retryable_status(600))
+}
