@@ -63,10 +63,10 @@ jobs:
           echo "$HOME/.moon/bin" >> $GITHUB_PATH
 
       - name: Update dependencies
-        run: moon update
+        run: cd cmd/keycloak_test && moon update
 
       - name: Build for JS target
-        run: moon build --target js cmd/keycloak_test
+        run: cd cmd/keycloak_test && moon build --target js
 
       - name: Start Keycloak and PostgreSQL
         run: docker compose up -d keycloak postgres
@@ -120,7 +120,7 @@ jobs:
           CLIENT_ID: test-client
           TEST_USERNAME: testuser
           TEST_PASSWORD: testpass123
-        run: moon run --target js cmd/keycloak_test
+        run: cd cmd/keycloak_test && moon run --target js
 
       - name: Show Keycloak logs on failure
         if: failure()

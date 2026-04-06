@@ -1,0 +1,14 @@
+{
+  "name": "ryota0624/keycloak-test",
+  "version": "0.1.0",
+  "deps": {
+    "ryota0624/oauth2": {
+      "path": "../.."
+    },
+    "mizchi/x": "0.1.3",
+    "moonbitlang/async": "0.16.6",
+    "moonbitlang/x": "0.4.40"
+  },
+  "source": ".",
+  "preferred-target": "native"
+}
